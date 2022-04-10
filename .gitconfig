@@ -1,0 +1,12 @@
+[user]
+	name = Viacheslav
+	email = vaceslavkozin619@gmail.com
+[alias]
+	st = status
+	cm = commit
+	cma = "!git add . && git commit"
+	sw = switch
+	co = checkout
+	acp = "!git add . && git commit && git push -u origin HEAD"
+[core]
+	editor = vim
