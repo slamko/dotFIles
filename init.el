@@ -16,46 +16,13 @@
 (setq use-package-always-ensure t)
 (setq inhibit-startup-message t)
 
-;; basic ui initialization
-
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(menu-bar-mode -1)
-
-(smooth-scrolling-mode 1)
-(load-theme 'doom-dark+)
-(display-time)
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
- '(package-selected-packages
-   '(move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
- '(warning-suppress-types '((comp) (comp))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-(setq redisplay-dont-pause t
-  scroll-margin 1
-  scroll-step 1
-  scroll-conservatively 10000)
 ;; package imports
 
 (use-package company
   :diminish company
   :ensure t
   :config
-  (progn
-    (add-hook 'after-init-hook 'global-company-mode)))
+  (add-hook 'after-init-hook 'global-company-mode))
 
 (use-package doom-themes)
 (use-package smooth-scrolling)
@@ -85,6 +52,47 @@
   :ensure t
   :init (doom-modeline-mode 1))
 
+(use-package preproc-font-lock)
+
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1))
+
+;; basic ui initialization
+
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+
+(smooth-scrolling-mode 1)
+(load-theme 'doom-dark+)
+(display-time)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
+ '(package-selected-packages
+   '(preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+ '(warning-suppress-types '((comp) (comp))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+(setq-default tab-width 4)
+(setq redisplay-dont-pause t
+  scroll-margin 1
+  scroll-step 1
+  scroll-conservatively 10000)
+
 ;; function definitions
 
 (defun my-sh-completion-at-point ()
@@ -93,6 +101,13 @@
     (when (and beg (> end beg))
       (bash-completion-dynamic-complete-nocomint beg end t))))
 
+(defun copy-line ()
+  (interactive)
+  (save-excursion
+    (back-to-indentation)
+    (kill-ring-save
+     (point)
+     (line-end-position))))
 (defun my-sh-hook ()
   (add-hook 'completion-at-point-functions #'my-sh-completion-at-point nil t))
 
@@ -106,6 +121,12 @@
   (interactive)
   (kill-buffer (current-buffer)))
 
+(defun magit-stage-all ()
+  (interactive)
+  (magit-stage-modified)
+  (magit-stage-untracked))
+
+
 ;; key bindings
 
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -117,6 +138,7 @@
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (global-set-key (kbd "C-s") 'swiper-isearch)
 (global-set-key (kbd "M-x") 'counsel-M-x)
+(setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "M-y") 'counsel-yank-pop)
 (global-set-key (kbd "<f1> f") 'counsel-describe-function)
@@ -139,3 +161,22 @@
 (global-set-key (kbd "M-<down>") 'move-text-down)
 (global-set-key (kbd "M-k") 'move-text-up)
 (global-set-key (kbd "M-j") 'move-text-down)
+(global-set-key (kbd "C-S-w") 'copy-line)
+(global-set-key (kbd "C-w") 'kill-ring-save)
+(global-set-key (kbd "M-w") 'kill-region)
+(global-set-key (kbd "C-.") 'replace-string)
+(global-set-key (kbd "C-M-.") 'replace-regexp)
+
+(define-prefix-command 'magit-map)
+(global-set-key (kbd "C-m") 'magit-map)
+(define-key magit-map (kbd "c") 'magit-commit)
+(define-key magit-map (kbd "s") 'magit)
+(define-key magit-map (kbd "m") 'magit-stage-modified)
+(define-key magit-map (kbd "a") 'magit-stage-all)
+(define-key magit-map (kbd "p") 'magit-push)
+(define-key magit-map (kbd "f") 'magit-pull)
+
+
+
+
+
