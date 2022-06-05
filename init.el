@@ -164,7 +164,6 @@
 (global-set-key (kbd "C-c V") 'ivy-pop-view)
 (global-set-key (kbd "C-p") 'yank)
 (global-set-key (kbd "C-u") 'undo)
-(global-set-key (kbd "C-<menu>") 'Helper-help)
 (global-set-key (kbd "C-h") 'left-char)
 (global-set-key (kbd "C-j") 'next-line)
 (global-set-key (kbd "C-k") 'previous-line)
@@ -184,14 +183,19 @@
 (global-set-key (kbd "C->") 'end-of-buffer)
 (global-set-key (kbd "C-z") 'undo)
 
-;;(define-prefix-command 'magit-map)
-;;(global-set-key (kbd "C-<menu>") 'magit-map)
-;;(global-set-key (kbd "C-<menu> c") 'magit-commit)
-;;(define-key magit-map (kbd "s") 'magit)
-;;(define-key magit-map (kbd "m") 'magit-stage-modified)
-;;(define-key magit-map (kbd "a") 'magit-stage-all)
-;;(define-key magit-map (kbd "p") 'magit-push)
-;;(define-key magit-map (kbd "f") 'magit-pull)
+;;(define-prefix-command 'pomichnyk)
+;;(global-set-key (kbd "C-<menu>") 'pomichnyk)
+;;(define-key pomichnyk (kbd "f") 'Helper-describe-function)
+;;(define-key pomichnyk (kbd "v") 'Helper-describe-variable)
+
+(define-prefix-command 'magit-map)
+(global-set-key (kbd "c-'") 'magit-map)
+(define-key magit-map (kbd "c") 'magit-commit)
+(define-key magit-map (kbd "s") 'magit)
+(define-key magit-map (kbd "m") 'magit-stage-modified)
+(define-key magit-map (kbd "a") 'magit-stage-all)
+(define-key magit-map (kbd "p") 'magit-push)
+(define-key magit-map (kbd "f") 'magit-pull)
 
 
 
