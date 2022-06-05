@@ -39,14 +39,16 @@
 (use-package sh-script)
 (use-package bash-completion)
 (use-package vterm)
+(use-package color-identifiers-mode)
 
 (use-package flycheck)
 (use-package lsp-mode
   :init
   (setq lsp-keymap-prefix "C-c l")
-  :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
+  :hook (
          (c-mode . lsp))
   :commands lsp)
+
 (use-package move-text)
 (use-package doom-modeline
   :ensure t
@@ -66,9 +68,12 @@
 (tool-bar-mode -1)
 (tooltip-mode -1)
 (menu-bar-mode -1)
+(add-hook 'after-init-hook 'global-color-identifiers-mode)
+(font-lock-add-keywords 'c-mode
+                 '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
 
 (smooth-scrolling-mode 1)
-(load-theme 'doom-dark+)
+(load-theme 'doom-dark+ t)
 (display-time)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (custom-set-variables
@@ -77,9 +82,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
+   '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
  '(package-selected-packages
-   '(preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+   '(rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
  '(warning-suppress-types '((comp) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -92,6 +97,12 @@
   scroll-margin 1
   scroll-step 1
   scroll-conservatively 10000)
+
+(setq initial-scratch-message nil)
+
+(setq-default color-identifiers-mode 1)
+;;(lsp-toggle)
+;;(lsp-toggle-symbol-highlight)
 
 ;; function definitions
 
@@ -121,18 +132,19 @@
   (interactive)
   (kill-buffer (current-buffer)))
 
-(defun magit-stage-all ()
-  (interactive)
-  (magit-stage-modified)
-  (magit-stage-untracked))
+;;(defun magit-stage-all ()
+  ;;(interactive)
+  ;;(magit-stage-modified)
+  ;;(magit-stage-untracked))
 
 
 ;; key bindings
 
 (global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key (kbd "C-<backspace>") 'switch-to-last-buffer)
-(global-set-key (kbd "C-<tab>") 'switch-to-prev-buffer)
+(global-set-key (kbd "M-<tab>") 'switch-to-prev-buffer)
+(global-set-key (kbd "C-<tab>") 'switch-to-last-buffer)
 (global-set-key (kbd "C-x w q") 'delete-window)
+(global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
 (global-set-key (kbd "C-S-<return>") 'eshell)
 (global-set-key (kbd "C-<return>") 'other-window)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -152,6 +164,7 @@
 (global-set-key (kbd "C-c V") 'ivy-pop-view)
 (global-set-key (kbd "C-p") 'yank)
 (global-set-key (kbd "C-u") 'undo)
+(global-set-key (kbd "C-<menu>") 'Helper-help)
 (global-set-key (kbd "C-h") 'left-char)
 (global-set-key (kbd "C-j") 'next-line)
 (global-set-key (kbd "C-k") 'previous-line)
@@ -166,15 +179,19 @@
 (global-set-key (kbd "M-w") 'kill-region)
 (global-set-key (kbd "C-.") 'replace-string)
 (global-set-key (kbd "C-M-.") 'replace-regexp)
+(global-set-key (kbd "C-:") 'goto-line)
+(global-set-key (kbd "C-<") 'beginning-of-buffer)
+(global-set-key (kbd "C->") 'end-of-buffer)
+(global-set-key (kbd "C-z") 'undo)
 
-(define-prefix-command 'magit-map)
-(global-set-key (kbd "C-m") 'magit-map)
-(define-key magit-map (kbd "c") 'magit-commit)
-(define-key magit-map (kbd "s") 'magit)
-(define-key magit-map (kbd "m") 'magit-stage-modified)
-(define-key magit-map (kbd "a") 'magit-stage-all)
-(define-key magit-map (kbd "p") 'magit-push)
-(define-key magit-map (kbd "f") 'magit-pull)
+;;(define-prefix-command 'magit-map)
+;;(global-set-key (kbd "C-<menu>") 'magit-map)
+;;(global-set-key (kbd "C-<menu> c") 'magit-commit)
+;;(define-key magit-map (kbd "s") 'magit)
+;;(define-key magit-map (kbd "m") 'magit-stage-modified)
+;;(define-key magit-map (kbd "a") 'magit-stage-all)
+;;(define-key magit-map (kbd "p") 'magit-push)
+;;(define-key magit-map (kbd "f") 'magit-pull)
 
 
 
