@@ -41,6 +41,8 @@
 (use-package vterm)
 (use-package color-identifiers-mode)
 
+(use-package multiple-cursors)
+
 (use-package flycheck)
 (use-package lsp-mode
   :init
@@ -81,10 +83,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(c-basic-offset 'set-from-style t)
+ '(c-default-style '((c-mode . "c") (awk-mode . "awk") (other . "gnu")) t)
  '(custom-safe-themes
    '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
  '(package-selected-packages
-   '(rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+   '(multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
  '(warning-suppress-types '((comp) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -92,7 +96,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-(setq-default tab-width 4)
+(setq-default tab-width 2)
 (setq redisplay-dont-pause t
   scroll-margin 1
   scroll-step 1
@@ -100,9 +104,19 @@
 
 (setq initial-scratch-message nil)
 
+(setq-default c-default-style "linux"
+			c-basic-offset 4)
+
+(setq-default tab-width 4)
+
+(electric-pair-mode 1)
+
+(delete-selection-mode)
+
 (setq-default color-identifiers-mode 1)
 ;;(lsp-toggle)
 ;;(lsp-toggle-symbol-highlight)
+(setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
 
 ;; function definitions
 
@@ -138,10 +152,23 @@
   ;;(magit-stage-untracked))
 
 
+(defun do-switch-buffer-file ()
+  (switch-to-next-buffer)
+  (if (string= "*" (substring (buffer-name (current-buffer)) 0 1))
+	  (do-switch-buffer-file)))
+
+(defun switch-to-next-file-buffer ()
+  (interactive)
+  (do-switch-buffer-file))
+
+(defun toggle-comment-on-line ()
+  (interactive)
+  (comment-or-uncomment-region (line-beginning-position) (line-end-position)))
+
 ;; key bindings
 
 (global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key (kbd "M-<tab>") 'switch-to-prev-buffer)
+(global-set-key (kbd "M-<tab>") 'switch-to-next-file-buffer)
 (global-set-key (kbd "C-<tab>") 'switch-to-last-buffer)
 (global-set-key (kbd "C-x w q") 'delete-window)
 (global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
@@ -150,7 +177,6 @@
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (global-set-key (kbd "C-s") 'swiper-isearch)
 (global-set-key (kbd "M-x") 'counsel-M-x)
-(setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "M-y") 'counsel-yank-pop)
 (global-set-key (kbd "<f1> f") 'counsel-describe-function)
@@ -179,17 +205,27 @@
 (global-set-key (kbd "C-.") 'replace-string)
 (global-set-key (kbd "C-M-.") 'replace-regexp)
 (global-set-key (kbd "C-:") 'goto-line)
-(global-set-key (kbd "C-<") 'beginning-of-buffer)
-(global-set-key (kbd "C->") 'end-of-buffer)
+(global-set-key (kbd "C-{") 'beginning-of-buffer)
+(global-set-key (kbd "C-}") 'end-of-buffer)
 (global-set-key (kbd "C-z") 'undo)
+(global-set-key (kbd "<f12>") 'lsp-find-declaration)
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+(global-set-key (kbd "C-;") 'toggle-comment-on-line)
+(global-set-key (kbd "C-f") 'swiper-isearch)
+(global-set-key (kbd "C-v") 'yank)
+(global-set-key (kbd "C-n") 'forward-char)
+(global-set-key (kbd "M-n") 'forward-word)
 
-;;(define-prefix-command 'pomichnyk)
+;;(defbine-prefix-command 'pomichnyk)
 ;;(global-set-key (kbd "C-<menu>") 'pomichnyk)
 ;;(define-key pomichnyk (kbd "f") 'Helper-describe-function)
 ;;(define-key pomichnyk (kbd "v") 'Helper-describe-variable)
 
 (define-prefix-command 'magit-map)
-(global-set-key (kbd "c-'") 'magit-map)
+(global-set-key (kbd "C-'") 'magit-map)
 (define-key magit-map (kbd "c") 'magit-commit)
 (define-key magit-map (kbd "s") 'magit)
 (define-key magit-map (kbd "m") 'magit-stage-modified)
