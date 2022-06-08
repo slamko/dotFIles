@@ -18,6 +18,62 @@
 
 ;; package imports
 
+(require 'exwm)
+(require 'exwm-config)
+(exwm-config-default)
+(require 'exwm-systemtray)
+(exwm-systemtray-enable)
+
+(setq exwm-input-prefix-keys
+	  '(?\C-x
+		?\C-c
+		?\M-x))
+
+(setq global-exwm-mode-var 3)
+(setq global-exwm-workspace-num 1)
+
+(defun fhd/exwm-input-line-mode ()
+  "Set exwm window to line-mode and show mode line"
+  (call-interactively #'exwm-input-grab-keyboard)
+  (setq global-exwm-mode-var 3)
+  (exwm-layout-show-mode-line))
+
+(defun fhd/exwm-input-char-mode ()
+  "Set exwm window to char-mode and hide mode line"
+  (call-interactively #'exwm-input-release-keyboard)
+  (setq global-exwm-mode-var 1)
+  (exwm-layout-hide-mode-line))
+
+(defun move-to-right-workspace ()
+  (interactive)
+  (setq global-exwm-workspace-num
+		(if (eql global-exwm-workspace-num 3)
+			0 (+ global-exwm-workspace-num 1)))
+  (exwm-workspace-switch global-exwm-workspace-num))
+
+(defun move-to-left-workspace ()
+  (interactive)
+  (setq global-exwm-workspace-num
+		(if (eql global-exwm-workspace-num 0)
+		  3
+		  (- global-exwm-workspace-num 1)))
+  (exwm-workspace-switch global-exwm-workspace-num))
+
+
+(defun fhd/exwm-input-toggle-mode ()
+  "Toggle between line- and char-mode"
+  (interactive)
+  (with-current-buffer (window-buffer)
+    (when (eq major-mode 'exwm-mode)
+      (if (equal global-exwm-mode-var 3) 
+          (fhd/exwm-input-char-mode)
+        (fhd/exwm-input-line-mode)))))
+
+(exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
+(exwm-input-set-key (kbd "s-p") 'counsel-linux-app)
+(exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
+(exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
+
 (use-package company
   :diminish company
   :ensure t
@@ -88,7 +144,7 @@
  '(custom-safe-themes
    '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
  '(package-selected-packages
-   '(multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+   '(exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
  '(warning-suppress-types '((comp) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -200,7 +256,7 @@
 (global-set-key (kbd "M-k") 'move-text-up)
 (global-set-key (kbd "M-j") 'move-text-down)
 (global-set-key (kbd "C-S-w") 'copy-line)
-(global-set-key (kbd "C-w") 'kill-ring-save)
+;; (global-set-key (kbd "C-w") 'kill-ring-save)
 (global-set-key (kbd "M-w") 'kill-region)
 (global-set-key (kbd "C-.") 'replace-string)
 (global-set-key (kbd "C-M-.") 'replace-regexp)
@@ -216,6 +272,9 @@
 (global-set-key (kbd "C-;") 'toggle-comment-on-line)
 (global-set-key (kbd "C-f") 'swiper-isearch)
 (global-set-key (kbd "C-v") 'yank)
+(global-set-key (kbd "C-w") 'ido-delete-backward-word-updir)
+(global-set-key (kbd "C-c") nil)
+(global-set-key (kbd "C-c") 'kill-ring-save)
 (global-set-key (kbd "C-n") 'forward-char)
 (global-set-key (kbd "M-n") 'forward-word)
 
