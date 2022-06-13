@@ -96,6 +96,7 @@
 (use-package bash-completion)
 (use-package vterm)
 (use-package color-identifiers-mode)
+(use-package rainbow-delimiters)
 
 (use-package multiple-cursors)
 
@@ -111,6 +112,9 @@
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1))
+
+(use-package all-the-icons
+  :ensure t)
 
 (use-package preproc-font-lock)
 
@@ -129,6 +133,7 @@
 (add-hook 'after-init-hook 'global-color-identifiers-mode)
 (font-lock-add-keywords 'c-mode
                  '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
+(setq-default rainbow-delimiters-mode t)
 
 (smooth-scrolling-mode 1)
 (load-theme 'doom-dark+ t)
@@ -144,7 +149,7 @@
  '(custom-safe-themes
    '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
  '(package-selected-packages
-   '(exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+   '(rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
  '(warning-suppress-types '((comp) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -163,7 +168,13 @@
 (setq-default c-default-style "linux"
 			c-basic-offset 4)
 
+(add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
+(add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
+(add-hook 'ielm-mode-hook 'eldoc-mode)
+
+(setq backup-directory-alist `(("." . "~/.emacs.bak")))
 (setq-default tab-width 4)
+(setq column-number-mode t)
 
 (electric-pair-mode 1)
 
@@ -175,6 +186,12 @@
 (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
 
 ;; function definitions
+
+(fset 'kella
+   (kmacro-lambda-form [?\C-x ?k return] 0 "%d"))
+
+
+(global-set-key (kbd "s-c") 'kella)
 
 (defun my-sh-completion-at-point ()
   (let ((end (point))
@@ -207,19 +224,48 @@
   ;;(magit-stage-modified)
   ;;(magit-stage-untracked))
 
-
-(defun do-switch-buffer-file ()
-  (switch-to-next-buffer)
-  (if (string= "*" (substring (buffer-name (current-buffer)) 0 1))
-	  (do-switch-buffer-file)))
+;; string= "*" (substring (buffer-name (current-buffer)) 0 1
+(defun do-switch-buffer-file (switch-fun)
+  (funcall switch-fun)
+  (if (not buffer-file-name)
+	  (do-switch-buffer-file switch-fun)))
 
 (defun switch-to-next-file-buffer ()
   (interactive)
-  (do-switch-buffer-file))
+  (do-switch-buffer-file 'switch-to-next-buffer))
+
+(defun switch-to-prev-file-buffer ()
+  (interactive)
+  (do-switch-buffer-file 'switch-to-prev-buffer))
 
 (defun toggle-comment-on-line ()
   (interactive)
   (comment-or-uncomment-region (line-beginning-position) (line-end-position)))
+
+(defun set-us-layout ()
+  (eshell-command "setxkbmap -layout us"))
+
+(defun set-ru-layout ()
+  (eshell-command "setxkbmap -layout ru"))
+
+(defun set-ua-layout ()
+  (eshell-command "setxkbmap -layout ua"))
+
+(setq cur-keyboard-layout 1)
+
+(defun switch-keyboard-layout ()
+  (interactive)
+  (setq cur-keyboard-layout
+	(if (eql cur-keyboard-layout 3)
+		(progn
+		  (set-us-layout)
+		  1)
+	  (+ global-exwm-workspace-num 1)))
+  (if (eql cur-keyboard-layout 2)
+	  (set-ua-layout))
+  (if (eql cur-keyboard-layout 3)
+		  (set-ru-layout))
+  )
 
 ;; key bindings
 
@@ -230,6 +276,7 @@
 (global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
 (global-set-key (kbd "C-S-<return>") 'eshell)
 (global-set-key (kbd "C-<return>") 'other-window)
+(global-set-key (kbd "M-<return>") 'switch-keyboard-layout)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 (global-set-key (kbd "C-s") 'swiper-isearch)
 (global-set-key (kbd "M-x") 'counsel-M-x)
@@ -242,8 +289,8 @@
 (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
 (global-set-key (kbd "<f2> j") 'counsel-set-variable)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-(global-set-key (kbd "C-c v") 'ivy-push-view)
-(global-set-key (kbd "C-c V") 'ivy-pop-view)
+;; (global-set-key (kbd "C-c v") 'ivy-push-view)
+;; (global-set-key (kbd "C-c V") 'ivy-pop-view)
 (global-set-key (kbd "C-p") 'yank)
 (global-set-key (kbd "C-u") 'undo)
 (global-set-key (kbd "C-h") 'left-char)
@@ -256,7 +303,6 @@
 (global-set-key (kbd "M-k") 'move-text-up)
 (global-set-key (kbd "M-j") 'move-text-down)
 (global-set-key (kbd "C-S-w") 'copy-line)
-;; (global-set-key (kbd "C-w") 'kill-ring-save)
 (global-set-key (kbd "M-w") 'kill-region)
 (global-set-key (kbd "C-.") 'replace-string)
 (global-set-key (kbd "C-M-.") 'replace-regexp)
@@ -268,7 +314,7 @@
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 (global-set-key (kbd "C-;") 'toggle-comment-on-line)
 (global-set-key (kbd "C-f") 'swiper-isearch)
 (global-set-key (kbd "C-v") 'yank)
