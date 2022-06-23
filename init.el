@@ -1,5 +1,6 @@
 ;; package manager initialization
 
+(message "")
 (require 'package)
 
 (add-to-list 'package-archives
@@ -59,6 +60,11 @@
 		  (- global-exwm-workspace-num 1)))
   (exwm-workspace-switch global-exwm-workspace-num))
 
+(require 'cl-lib)
+(defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
+  "Prevent annoying \"Active processes exist\" query when you quit Emacs."
+  (cl-letf (((symbol-function #'process-list) (lambda ())))
+    ad-do-it))
 
 (defun fhd/exwm-input-toggle-mode ()
   "Toggle between line- and char-mode"
@@ -73,6 +79,7 @@
 (exwm-input-set-key (kbd "s-p") 'counsel-linux-app)
 (exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
 (exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
+(exwm-input-set-key (kbd "s-<return>") 'vterm)
 
 (use-package company
   :diminish company
@@ -107,6 +114,8 @@
   :hook (
          (c-mode . lsp))
   :commands lsp)
+
+;; (use-package lsp-ui)
 
 (use-package move-text)
 (use-package doom-modeline
@@ -149,7 +158,7 @@
  '(custom-safe-themes
    '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
  '(package-selected-packages
-   '(rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+   '(screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
  '(warning-suppress-types '((comp) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -157,6 +166,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
 (setq-default tab-width 2)
 (setq redisplay-dont-pause t
   scroll-margin 1
@@ -186,6 +196,43 @@
 (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
 
 ;; function definitions
+
+(save-excursion
+  (set-buffer (get-buffer-create "*scratch*"))
+  (make-local-variable 'kill-buffer-query-functions)
+  (add-hook 'kill-buffer-query-functions 'kill-scratch-buffer))
+
+(setq neo-smart-open t)
+
+(defun neotree-project-dir ()
+    "Open NeoTree using the git root."
+    (interactive)
+    (let ((project-dir (ffip-project-root))
+          (file-name (buffer-file-name)))
+      (if project-dir
+          (progn
+            (neotree-dir project-dir)
+            (neotree-find file-name))
+        (message "Could not find git project root."))))
+  
+(define-key mode-specific-map (kbd "C-c C-p") 'neotree-project-dir)
+
+(defun kill-scratch-buffer ()
+  ;; The next line is just in case someone calls this manually
+  (set-buffer (get-buffer-create "*scratch*"))
+
+  ;; Kill the current (*scratch*) buffer
+  (remove-hook 'kill-buffer-query-functions 'kill-scratch-buffer)
+  (kill-buffer (current-buffer))
+
+  ;; Make a brand new *scratch* buffer
+  (set-buffer (get-buffer-create "*scratch*"))
+  (lisp-interaction-mode)
+  (make-local-variable 'kill-buffer-query-functions)
+  (add-hook 'kill-buffer-query-functions 'kill-scratch-buffer)
+
+  ;; Since we killed it, don't let caller do that.
+  nil)
 
 (fset 'kella
    (kmacro-lambda-form [?\C-x ?k return] 0 "%d"))
@@ -255,17 +302,58 @@
 
 (defun switch-keyboard-layout ()
   (interactive)
-  (setq cur-keyboard-layout
-	(if (eql cur-keyboard-layout 3)
+  (progn
+	(setq cur-keyboard-layout
+	  (if (eql cur-keyboard-layout 3)
 		(progn
 		  (set-us-layout)
+		  (message "set layout: us")
 		  1)
-	  (+ global-exwm-workspace-num 1)))
-  (if (eql cur-keyboard-layout 2)
-	  (set-ua-layout))
-  (if (eql cur-keyboard-layout 3)
-		  (set-ru-layout))
-  )
+	  (+ cur-keyboard-layout 1)))
+	(if (eql cur-keyboard-layout 2)
+		(progn
+		  (set-ua-layout)
+		  (message "set layout: ua")))
+	(if (eql cur-keyboard-layout 3)
+		(progn
+		  (set-ru-layout)
+		  (message "set layout: ru")))))
+
+(fset 'dup-line
+   (kmacro-lambda-form [?\C-a ?\S-\C-e ?\C-c ?c return ?\C-v] 0 "%d"))
+
+(defun dublicate-line ()
+  (interactive)
+  (dup-line))
+
+(defun dublicate-multiple ()
+  (interactive)
+  (dotimes (c (read-number "Count: " 1))
+	(dup-line)))
+
+(defun dublicate-region ()
+  (interactive)
+  (clipboard-kill-region (mark) (point))
+  (yank)
+  (yank))
+
+(defun dublicate-region-multiple ()
+  (interactive)
+  (clipboard-kill-region (mark) (point))
+  (yank)
+  (dotimes (c (read-number "Count: " 1))
+	  (yank)))
+
+(defun insert-up-line ()
+  (interactive)
+  (previous-line)
+  (move-end-of-line nil)
+  (newline-and-indent))
+
+(defun take-screenshot ()
+  (interactive)
+  (setq file (concat "/home/slamko/Pictures/" (read-string "Screenshot name: ")))
+  (start-process "scrot" (get-buffer-create "*scrot*") "/bin/scrot" file))
 
 ;; key bindings
 
@@ -290,7 +378,7 @@
 (global-set-key (kbd "<f2> j") 'counsel-set-variable)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
 ;; (global-set-key (kbd "C-c v") 'ivy-push-view)
-;; (global-set-key (kbd "C-c V") 'ivy-pop-view)
+;; (define-key mode-specific-map (kbd "v") 'ivy-pop-view)
 (global-set-key (kbd "C-p") 'yank)
 (global-set-key (kbd "C-u") 'undo)
 (global-set-key (kbd "C-h") 'left-char)
@@ -314,20 +402,30 @@
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "C->") 'mc/mark-next-like-this)
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+(define-key mode-specific-map (kbd "C-<") 'mc/mark-all-like-this)
 (global-set-key (kbd "C-;") 'toggle-comment-on-line)
 (global-set-key (kbd "C-f") 'swiper-isearch)
 (global-set-key (kbd "C-v") 'yank)
 (global-set-key (kbd "C-w") 'ido-delete-backward-word-updir)
-(global-set-key (kbd "C-c") nil)
-(global-set-key (kbd "C-c") 'kill-ring-save)
 (global-set-key (kbd "C-n") 'forward-char)
 (global-set-key (kbd "M-n") 'forward-word)
+(global-set-key (kbd "C-o") 'insert-next-line)
+(global-set-key (kbd "C-O") 'insert-up-line)
+(global-set-key (kbd "<print>") 'take-screenshot)
 
 ;;(defbine-prefix-command 'pomichnyk)
 ;;(global-set-key (kbd "C-<menu>") 'pomichnyk)
 ;;(define-key pomichnyk (kbd "f") 'Helper-describe-function)
 ;;(define-key pomichnyk (kbd "v") 'Helper-describe-variable)
+(define-key mode-specific-map (kbd "C-/") 'neotree-toggle)
+(define-key mode-specific-map (kbd "c") 'kill-ring-save)
+(define-key mode-specific-map (kbd "x") 'kill-whole-line)
+(define-key mode-specific-map (kbd "C-x") 'kill-region)
+(define-key mode-specific-map (kbd "d") 'dublicate-line)
+(define-key mode-specific-map (kbd "<return>") 'switch-keyboard-layout)
+(define-key mode-specific-map (kbd "D") 'dublicate-multiple)
+(define-key mode-specific-map (kbd "C-d") 'dublicate-region)
+(define-key mode-specific-map (kbd "C-M-d") 'dublicate-region-multiple)
 
 (define-prefix-command 'magit-map)
 (global-set-key (kbd "C-'") 'magit-map)
@@ -338,7 +436,14 @@
 (define-key magit-map (kbd "p") 'magit-push)
 (define-key magit-map (kbd "f") 'magit-pull)
 
+(defun run-auto-start ()
+  (call-process "/bin/bash" "~/.wm-startup.sh"))
 
+(defun start-message ()
+  (message "Welcome back to the Church, my child."))
+
+(add-hook 'exwm-init-hook 'start-message)
+(add-hook 'after-init-hook 'run-auto-start)
 
 
 
