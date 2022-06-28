@@ -1,0 +1,260 @@
+#+title: Emacs Config
+#+PROPERTY: header-args:emacs-lisp :tangle ./init-new.el
+
+* Package Manager Initialization
+#+begin_src emacs-lisp
+
+(require 'package)
+
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+(unless (package-installed-p 'use-package)
+	(package-install 'use-package))
+
+(require 'use-package)
+(setq use-package-always-ensure t)
+
+#+end_src>
+* Basic UI Configuration
+#+begin_src emacs-lisp
+(setq inhibit-startup-message t)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+(add-hook 'after-init-hook 'global-color-identifiers-mode)
+(font-lock-add-keywords 'c-mode
+                 '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
+
+(smooth-scrolling-mode 1)
+(load-theme 'doom-dark+ t)
+(display-time)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(c-basic-offset 'set-from-style t)
+ '(c-default-style '((c-mode . "c") (awk-mode . "awk") (other . "gnu")) t)
+ '(custom-safe-themes
+   '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
+ '(package-selected-packages
+   '(org-bullets command-log-mode counsel-projectile projectile ivy-rich screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+ '(warning-suppress-types '((comp) (comp))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+#+end_src>
+* Packages Import
+#+begin_src emacs-lisp
+
+(require 'exwm)
+(require 'exwm-config)
+(require 'exwm-systemtray)
+
+(use-package company
+  :diminish company
+  :ensure t
+  :config
+  (add-hook 'after-init-hook 'global-company-mode))
+
+(use-package doom-themes)
+(use-package smooth-scrolling)
+
+(use-package ivy
+  :diminish ivy-mode
+  :bind ()
+  :config
+  (ivy-mode 1))
+
+(use-package counsel)
+(use-package magit)
+(use-package neotree)
+(use-package sh-script)
+(use-package bash-completion)
+(use-package vterm)
+(use-package color-identifiers-mode)
+(use-package rainbow-delimiters)
+
+(use-package multiple-cursors)
+(use-package command-log-mode)
+
+(use-package flycheck)
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (
+         (c-mode . lsp))
+  :commands lsp)
+
+(use-package projectile
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :custom (projectile-completion-system 'ivy)
+  :bind-keymap
+  ("C-c p" . projectile-command-map))
+
+(use-package counsel-projectile
+  :config (counsel-projectile-mode))
+
+;; (use-package lsp-ui)
+
+(use-package move-text)
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
+
+(use-package all-the-icons
+  :ensure t)
+
+(use-package preproc-font-lock)
+
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1))
+
+(use-package ivy-rich
+  :init
+  (ivy-rich-mode 1))
+
+(use-package org)
+
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+(require 'org-tempo)
+
+#+end_src>
+* Packages Setup
+** EXWM
+#+begin_src emacs-lisp
+(exwm-config-default)
+(exwm-systemtray-enable)
+
+(setq exwm-input-prefix-keys
+	  '(?\C-x
+		?\C-c
+		?\M-x))
+		
+(setq global-exwm-mode-var 3)
+(setq global-exwm-workspace-num 1)
+
+
+#+end_src>
+
+** Org Mode
+#+begin_src emacs-lisp
+
+(setq org-ellipsis " ▾"
+	    org-support-shift-select t
+        org-src-fontify-natively t
+        org-fontify-quote-and-verse-blocks t
+        org-src-tab-acts-natively t
+        org-edit-src-content-indentation 2
+        org-hide-block-startup nil
+        org-src-preserve-indentation nil
+        org-startup-folded 'content
+        org-cycle-separator-lines 2
+        org-capture-bookmark nil)
+
+
+
+(org-babel-do-load-languages
+  'org-babel-load-languages
+  '((emacs-lisp . t)))
+
+
+(add-to-list 'org-structure-template-alist '("sh" . "src sh"))
+(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+(add-to-list 'org-structure-template-alist '("li" . "src lisp"))
+(add-to-list 'org-structure-template-alist '("py" . "src python"))
+(add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
+(add-to-list 'org-structure-template-alist '("json" . "src json"))
+
+#+end_src>
+** UI
+#+begin_src emacs-lisp
+(setq-default tab-width 2)
+(setq redisplay-dont-pause t
+  scroll-margin 1
+  scroll-step 1
+  scroll-conservatively 10000)
+(setq-default rainbow-delimiters-mode t)
+
+(setq initial-scratch-message nil)
+
+(setq-default c-default-style "linux"
+			c-basic-offset 4)
+
+(add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
+(add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
+(add-hook 'ielm-mode-hook 'eldoc-mode)
+
+(setq-default tab-width 4)
+(setq column-number-mode t)
+
+(electric-pair-mode 1)
+(delete-selection-mode)
+
+(setq-default color-identifiers-mode 1)
+(setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
+(setq neo-smart-open t)
+
+#+end_src>
+
+** Emacs System
+#+begin_src emacs-lisp
+(setq backup-directory-alist `(("." . "~/.emacs.d/.backups")))
+(setq delete-old-versions t
+  kept-new-versions 10
+  kept-old-versions 5)
+  #+end_src>
+* Macro Inserts
+* Function definitions
+** Emacs Basic Setup
+#+begin_src emacs-lisp
+(defun set-no-process-query-on-exit ()
+    (let ((proc (get-buffer-process (current-buffer))))
+    (when (processp proc)
+    (set-process-query-on-exit-flag proc nil))))
+
+(save-excursion
+  (set-buffer (get-buffer-create "*scratch*"))
+  (make-local-variable 'kill-buffer-query-functions)
+  (add-hook 'kill-buffer-query-functions 'kill-scratch-buffer))
+
+(defun kill-scratch-buffer ()
+  ;; The next line is just in case someone calls this manually
+  (set-buffer (get-buffer-create "*scratch*"))
+
+  ;; Kill the current (*scratch*) buffer
+  (remove-hook 'kill-buffer-query-functions 'kill-scratch-buffer)
+  (kill-buffer (current-buffer))
+
+  ;; Make a brand new *scratch* buffer
+  (set-buffer (get-buffer-create "*scratch*"))
+  (lisp-interaction-mode)
+  (make-local-variable 'kill-buffer-query-functions)
+  (add-hook 'kill-buffer-query-functions 'kill-scratch-buffer)
+
+  ;; Since we killed it, don't let caller do that.
+  nil)
+
+#+end_src>
+* Hooks Setup
+* Keybindings
