@@ -1,5 +1,5 @@
 #+title: Emacs Config
-#+PROPERTY: header-args:emacs-lisp :tangle ./init-new.el
+#+PROPERTY: header-args:emacs-lisp :tangle "./init.el"
 
 * Package Manager Initialization
 #+begin_src emacs-lisp
@@ -20,9 +20,10 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-#+end_src>
+#+end_src
 * Basic UI Configuration
 #+begin_src emacs-lisp
+
 (setq inhibit-startup-message t)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
@@ -55,13 +56,14 @@
  ;; If there is more than one, they won't work right.
  )
 
-#+end_src>
+#+end_src
 * Packages Import
 #+begin_src emacs-lisp
 
 (require 'exwm)
 (require 'exwm-config)
 (require 'exwm-systemtray)
+(require 'cl-lib)
 
 (use-package company
   :diminish company
@@ -139,10 +141,11 @@
 
 (require 'org-tempo)
 
-#+end_src>
-* Packages Setup
+#+end_src
+* Variables Setup
 ** EXWM
 #+begin_src emacs-lisp
+
 (exwm-config-default)
 (exwm-systemtray-enable)
 
@@ -155,7 +158,7 @@
 (setq global-exwm-workspace-num 1)
 
 
-#+end_src>
+#+end_src
 
 ** Org Mode
 #+begin_src emacs-lisp
@@ -186,9 +189,10 @@
 (add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
 (add-to-list 'org-structure-template-alist '("json" . "src json"))
 
-#+end_src>
+#+end_src
 ** UI
 #+begin_src emacs-lisp
+
 (setq-default tab-width 2)
 (setq redisplay-dont-pause t
   scroll-margin 1
@@ -215,19 +219,41 @@
 (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
 (setq neo-smart-open t)
 
-#+end_src>
+#+end_src
 
 ** Emacs System
 #+begin_src emacs-lisp
+
+(setq cur-keyboard-layout 1)
+
 (setq backup-directory-alist `(("." . "~/.emacs.d/.backups")))
 (setq delete-old-versions t
   kept-new-versions 10
   kept-old-versions 5)
-  #+end_src>
+  #+end_src
 * Macro Inserts
-* Function definitions
-** Emacs Basic Setup
+** Emacs Helper Macros
 #+begin_src emacs-lisp
+
+(fset 'kella
+   (kmacro-lambda-form [?\C-x ?k return] 0 "%d"))
+
+#+end_src
+** Text Editing
+#+begin_src emacs-lisp
+
+(fset 'dup-line
+	(kmacro-lambda-form [?\C-a ?\S-\C-e ?\C-c ?c return ?\C-v] 0 "%d"))
+
+
+(fset 'kill-till-end-line
+	(kmacro-lambda-form [?\S-\C-e backspace] 0 "%d"))
+
+#+end_src
+* Function definitions
+** Emacs Setup Functions
+#+begin_src emacs-lisp
+
 (defun set-no-process-query-on-exit ()
     (let ((proc (get-buffer-process (current-buffer))))
     (when (processp proc)
@@ -255,6 +281,312 @@
   ;; Since we killed it, don't let caller do that.
   nil)
 
-#+end_src>
+(defun switch-to-last-buffer ()
+  (interactive)
+  (switch-to-buffer nil))
+
+(defun kill-current-buffer ()
+  (interactive)
+  (kill-buffer (current-buffer)))
+
+(defun set-us-layout ()
+  (eshell-command "setxkbmap -layout us"))
+
+(defun set-ru-layout ()
+  (eshell-command "setxkbmap -layout ru"))
+
+(defun set-ua-layout ()
+  (eshell-command "setxkbmap -layout ua"))
+
+(defun switch-keyboard-layout ()
+  (interactive)
+  (progn
+	(setq cur-keyboard-layout
+	  (if (eql cur-keyboard-layout 3)
+		(progn
+		  (set-us-layout)
+		  (message "set layout: us")
+		  1)
+	  (+ cur-keyboard-layout 1)))
+	(if (eql cur-keyboard-layout 2)
+		(progn
+		  (set-ua-layout)
+		  (message "set layout: ua")))
+	(if (eql cur-keyboard-layout 3)
+		(progn
+		  (set-ru-layout)
+		  (message "set layout: ru")))))
+
+(defun take-screenshot ()
+  (interactive)
+  (start-process "scrot"
+    (get-buffer-create "*scrot*")
+	"/bin/scrot"
+	(concat "/home/slamko/Pictures/" (read-string "Screenshot name: "))))
+
+(defun run-auto-start ()
+  (call-process "/bin/bash" "~/.wm-startup.sh"))
+
+(defun start-message ()
+  (message "Welcome back to the Church, my child."))
+  
+#+end_src
+** EXWM
+#+begin_src emacs-lisp
+
+(defun fhd/exwm-input-line-mode ()
+  "Set exwm window to line-mode and show mode line"
+  (call-interactively #'exwm-input-grab-keyboard)
+  (setq global-exwm-mode-var 3)
+  (exwm-layout-show-mode-line))
+
+(defun fhd/exwm-input-char-mode ()
+  "Set exwm window to char-mode and hide mode line"
+  (call-interactively #'exwm-input-release-keyboard)
+  (setq global-exwm-mode-var 1)
+  (exwm-layout-hide-mode-line))
+
+(defun move-to-right-workspace ()
+  (interactive)
+  (setq global-exwm-workspace-num
+		(if (eql global-exwm-workspace-num 3)
+			0 (+ global-exwm-workspace-num 1)))
+  (exwm-workspace-switch global-exwm-workspace-num))
+
+(defun move-to-left-workspace ()
+  (interactive)
+  (setq global-exwm-workspace-num
+		(if (eql global-exwm-workspace-num 0)
+		  3
+		  (- global-exwm-workspace-num 1)))
+  (exwm-workspace-switch global-exwm-workspace-num))
+
+(defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
+  "Prevent annoying \"Active processes exist\" query when you quit Emacs."
+  (cl-letf (((symbol-function #'process-list) (lambda ())))
+    ad-do-it))
+
+(defun fhd/exwm-input-toggle-mode ()
+  "Toggle between line- and char-mode"
+  (interactive)
+  (with-current-buffer (window-buffer)
+    (when (eq major-mode 'exwm-mode)
+      (if (equal global-exwm-mode-var 3) 
+          (fhd/exwm-input-char-mode)
+        (fhd/exwm-input-line-mode)))))
+
+#+end_src
+** Packages setup functions
+#+begin_src emacs-lisp
+
+(defun neotree-project-dir ()
+    "Open NeoTree using the git root."
+    (interactive)
+    (let ((project-dir (ffip-project-root))
+          (file-name (buffer-file-name)))
+      (if project-dir
+          (progn
+            (neotree-dir project-dir)
+            (neotree-find file-name))
+        (message "Could not find git project root."))))
+
+		
+(defun my-sh-completion-at-point ()
+  (let ((end (point))
+        (beg (save-excursion (sh-beginning-of-command))))
+    (when (and beg (> end beg))
+      (bash-completion-dynamic-complete-nocomint beg end t))))
+
+(defun my-sh-hook ()
+  (add-hook 'completion-at-point-functions #'my-sh-completion-at-point nil t))
+
+#+end_src
+** Text Editing
+#+begin_src emacs-lisp
+
+(defun toggle-comment-on-line ()
+  (interactive)
+  (comment-or-uncomment-region (line-beginning-position) (line-end-position)))
+
+
+(defun dublicate-line ()
+  (interactive)
+  (dup-line))
+
+(defun dublicate-multiple ()
+  (interactive)
+  (dotimes (c (read-number "Count: " 1))
+	(dup-line)))
+
+(defun dublicate-region ()
+  (interactive)
+  (clipboard-kill-region (mark) (point))
+  (yank)
+  (yank))
+
+(defun dublicate-region-multiple ()
+  (interactive)
+  (clipboard-kill-region (mark) (point))
+  (yank)
+  (dotimes (c (read-number "Count: " 1))
+	  (yank)))
+
+(defun insert-next-line ()
+  (interactive)
+  (move-end-of-line nil)
+  (newline-and-indent))
+
+(defun insert-up-line ()
+  (interactive)
+  (beginning-of-line)
+  (newline-and-indent)
+  (previous-line))
+
+(defun backward-up-sexp (arg)
+  (interactive "p")
+  (let ((ppss (syntax-ppss)))
+    (cond ((elt ppss 3)
+           (goto-char (elt ppss 8))
+           (backward-up-sexp (1- arg)))
+          ((backward-up-list arg)))))
+
+(defun kill-untill-end-line ()
+  (interactive)
+  (kill-till-end-line))
+  
+#+end_src
+** Keybindings Shortcut
+#+begin_src emacs-lisp
+
+(defun init-mode-specific-map ()
+  (define-key mode-specific-map (kbd "C-<") 'mc/mark-all-like-this)
+  (define-key mode-specific-map (kbd "C-/") 'neotree-toggle)
+  (define-key mode-specific-map (kbd "c") 'kill-ring-save)
+  (define-key mode-specific-map (kbd "x") 'kill-whole-line)
+  (define-key mode-specific-map (kbd "C-x") 'kill-region)
+  (define-key mode-specific-map (kbd "d") 'dublicate-line)
+  (define-key mode-specific-map (kbd "C-k") 'kill-untill-end-line)
+  (define-key mode-specific-map (kbd "<return>") 'switch-keyboard-layout)
+  (define-key mode-specific-map (kbd "D") 'dublicate-multiple)
+  (define-key mode-specific-map (kbd "C-d") 'dublicate-region)
+  (define-key mode-specific-map (kbd "C-M-d") 'dublicate-region-multiple))
+
+#+end_src
 * Hooks Setup
+** Init Hooks
+#+begin_src emacs-lisp
+
+  (init-mode-specific-map)
+  (add-hook 'after-init-hook 'global-color-identifiers-mode)
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (add-hook 'term-exec-hook 'set-no-process-query-on-exit)
+  
+#+end_src
+** EXWM
+#+begin_src emacs-lisp
+(add-hook 'exwm-init-hook 'start-message)
+(add-hook 'exwm-init-hook 'run-auto-start)
+#+end_src
+** Lsp
+#+begin_src emacs-lisp
+(add-hook 'lsp-mode-hook 'init-mode-specific-map)
+#+end_src
+** Editing Modes Hooks
+#+begin_src emacs-lisp
+
+  (add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
+  (add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
+  (add-hook 'ielm-mode-hook 'eldoc-mode)
+  (add-hook 'sh-mode-hook #'my-sh-hook)
+  
+#+end_src
 * Keybindings
+** Base Emacs Bindings
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+(global-set-key (kbd "M-<tab>") 'switch-to-next-file-buffer)
+(global-set-key (kbd "M-<backspace>") 'switch-to-last-buffer)
+(global-set-key (kbd "C-x w q") 'delete-window)
+(global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
+(global-set-key (kbd "C-S-<return>") 'eshell)
+(global-set-key (kbd "C-<tab>") 'other-window)
+(global-set-key (kbd "M-<return>") 'switch-keyboard-layout)
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+(global-set-key (kbd "C-s") 'save-buffer)
+#+end_src
+
+** Editor Bindins
+*** Text Editing
+#+begin_src emacs-lisp
+
+(global-set-key (kbd "C-p") 'yank)
+(global-set-key (kbd "C-u") 'undo)
+(global-set-key (kbd "C-S-Q") 'kill-current-buffer)
+(global-set-key (kbd "M-<up>") 'move-text-up)
+(global-set-key (kbd "M-<down>") 'move-text-down)
+(global-set-key (kbd "M-k") 'move-text-up)
+(global-set-key (kbd "M-j") 'move-text-down)
+(global-set-key (kbd "C-S-w") 'copy-line)
+(global-set-key (kbd "M-w") 'kill-region)
+(global-set-key (kbd "C-.") 'replace-string)
+(global-set-key (kbd "C-M-.") 'replace-regexp)
+(global-set-key (kbd "C-z") 'undo)
+(global-set-key (kbd "C-;") 'toggle-comment-on-line)
+(global-set-key (kbd "C-v") 'yank)
+(global-set-key (kbd "C-w") 'ido-delete-backward-word-updir)
+(global-set-key (kbd "C-o") 'insert-next-line)
+(global-set-key (kbd "C-S-o") 'insert-up-line)
+
+#+end_src
+
+*** Text Navigation
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-h") 'left-char)
+(global-set-key (kbd "C-j") 'next-line)
+(global-set-key (kbd "C-k") 'previous-line)
+(global-set-key (kbd "C-l") 'right-char)
+(global-set-key (kbd "C-n") 'forward-char)
+(global-set-key (kbd "M-n") 'forward-word)
+(global-set-key (kbd "C-{") 'beginning-of-buffer)
+(global-set-key (kbd "C-}") 'end-of-buffer)
+(global-set-key (kbd "C-:") 'goto-line)
+#+end_src
+** Packages Setup Bindings
+*** Lsp
+#+begin_src emacs-lisp
+(global-set-key (kbd "<f12>") 'lsp-find-declaration)
+#+end_src
+
+*** Multiple Cursors
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->") 'mc/mark-next-like-this)
+(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+#+end_src
+
+*** Magit
+#+begin_src emacs-lisp
+(define-prefix-command 'magit-map)
+(global-set-key (kbd "C-'") 'magit-map)
+(define-key magit-map (kbd "c") 'magit-commit)
+(define-key magit-map (kbd "s") 'magit)
+(define-key magit-map (kbd "m") 'magit-stage-modified)
+(define-key magit-map (kbd "a") 'magit-stage-all)
+(define-key magit-map (kbd "p") 'magit-push)
+(define-key magit-map (kbd "f") 'magit-pull)
+#+end_src
+
+*** Counsel
+#+begin_src emacs-lisp
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+(global-set-key (kbd "M-y") 'counsel-yank-pop)
+(global-set-key (kbd "<f1> f") 'counsel-describe-function)
+(global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+(global-set-key (kbd "<f1> l") 'counsel-find-library)
+(global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+(global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+(global-set-key (kbd "<f2> j") 'counsel-set-variable)
+(global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+#+end_src
+
