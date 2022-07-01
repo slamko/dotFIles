@@ -24,122 +24,123 @@
 * Basic UI Configuration
 #+begin_src emacs-lisp
 
-(setq inhibit-startup-message t)
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(tooltip-mode -1)
-(menu-bar-mode -1)
-(add-hook 'after-init-hook 'global-color-identifiers-mode)
-(font-lock-add-keywords 'c-mode
-                 '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
+  (setq inhibit-startup-message t)
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1)
+  (tooltip-mode -1)
+  (menu-bar-mode -1)
+  (add-hook 'after-init-hook 'global-color-identifiers-mode)
+  (font-lock-add-keywords 'c-mode
+				   '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
 
-(smooth-scrolling-mode 1)
-(load-theme 'doom-dark+ t)
-(display-time)
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(c-basic-offset 'set-from-style t)
- '(c-default-style '((c-mode . "c") (awk-mode . "awk") (other . "gnu")) t)
- '(custom-safe-themes
-   '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
- '(package-selected-packages
-   '(org-bullets command-log-mode counsel-projectile projectile ivy-rich screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
- '(warning-suppress-types '((comp) (comp))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+  (smooth-scrolling-mode 1)
+  (load-theme 'doom-dark+ t)
+  (display-time)
+
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(c-basic-offset 'set-from-style t)
+   '(c-default-style '((c-mode . "c") (awk-mode . "awk") (other . "gnu")) t)
+   '(custom-safe-themes
+	 '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
+   '(package-selected-packages
+	 '(org-bullets command-log-mode counsel-projectile projectile ivy-rich screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+   '(warning-suppress-types '((comp) (comp))))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   )
 
 #+end_src
 * Packages Import
 #+begin_src emacs-lisp
 
-(require 'exwm)
-(require 'exwm-config)
-(require 'exwm-systemtray)
-(require 'cl-lib)
+  (require 'exwm)
+  (require 'exwm-config)
+  (require 'exwm-systemtray)
+  (require 'cl-lib)
 
-(use-package company
-  :diminish company
-  :ensure t
-  :config
-  (add-hook 'after-init-hook 'global-company-mode))
+  (use-package company
+	:diminish company
+	:ensure t
+	:config
+	(add-hook 'after-init-hook 'global-company-mode))
+  
+  (use-package doom-themes)
+  (use-package smooth-scrolling)
 
-(use-package doom-themes)
-(use-package smooth-scrolling)
+  (use-package ivy
+	:diminish ivy-mode
+	:bind ()
+	:config
+	(ivy-mode 1))
 
-(use-package ivy
-  :diminish ivy-mode
-  :bind ()
-  :config
-  (ivy-mode 1))
+  (use-package counsel)
+  (use-package magit)
+  (use-package neotree)
+  (use-package sh-script)
+  (use-package bash-completion)
+  (use-package vterm)
+  (use-package color-identifiers-mode)
+  (use-package rainbow-delimiters)
+  (use-package diredfl)
 
-(use-package counsel)
-(use-package magit)
-(use-package neotree)
-(use-package sh-script)
-(use-package bash-completion)
-(use-package vterm)
-(use-package color-identifiers-mode)
-(use-package rainbow-delimiters)
+  (use-package multiple-cursors)
+  (use-package command-log-mode)
 
-(use-package multiple-cursors)
-(use-package command-log-mode)
+  (use-package flycheck)
+  (use-package lsp-mode
+	:init
+	(setq lsp-keymap-prefix "C-c l")
+	:hook (
+		   (c-mode . lsp))
+	:commands lsp)
 
-(use-package flycheck)
-(use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (
-         (c-mode . lsp))
-  :commands lsp)
+  (use-package projectile
+	:diminish projectile-mode
+	:config (projectile-mode)
+	:custom (projectile-completion-system 'ivy)
+	:bind-keymap
+	("C-c p" . projectile-command-map))
 
-(use-package projectile
-  :diminish projectile-mode
-  :config (projectile-mode)
-  :custom (projectile-completion-system 'ivy)
-  :bind-keymap
-  ("C-c p" . projectile-command-map))
+  (use-package counsel-projectile
+	:config (counsel-projectile-mode))
 
-(use-package counsel-projectile
-  :config (counsel-projectile-mode))
+  ;; (use-package lsp-ui)
 
-;; (use-package lsp-ui)
+  (use-package move-text)
+  (use-package doom-modeline
+	:ensure t
+	:init (doom-modeline-mode 1))
 
-(use-package move-text)
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1))
+  (use-package all-the-icons
+	:ensure t)
 
-(use-package all-the-icons
-  :ensure t)
+  (use-package preproc-font-lock)
 
-(use-package preproc-font-lock)
+  (use-package which-key
+	:init (which-key-mode)
+	:diminish which-key-mode
+	:config
+	(setq which-key-idle-delay 1))
 
-(use-package which-key
-  :init (which-key-mode)
-  :diminish which-key-mode
-  :config
-  (setq which-key-idle-delay 1))
+  (use-package ivy-rich
+	:init
+	(ivy-rich-mode 1))
 
-(use-package ivy-rich
-  :init
-  (ivy-rich-mode 1))
+  (use-package org)
 
-(use-package org)
+  (use-package org-bullets
+	:hook (org-mode . org-bullets-mode)
+	:custom
+	(org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode)
-  :custom
-  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
-
-(require 'org-tempo)
+  (require 'org-tempo)
 
 #+end_src
 * Variables Setup
@@ -156,8 +157,7 @@
 		
 (setq global-exwm-mode-var 3)
 (setq global-exwm-workspace-num 1)
-
-
+(display-battery-mode)
 #+end_src
 
 ** Org Mode
@@ -193,43 +193,40 @@
 ** UI
 #+begin_src emacs-lisp
 
-(setq-default tab-width 2)
-(setq redisplay-dont-pause t
-  scroll-margin 1
-  scroll-step 1
-  scroll-conservatively 10000)
-(setq-default rainbow-delimiters-mode t)
+  (setq-default tab-width 2)
+  (setq redisplay-dont-pause t
+	scroll-margin 1
+	scroll-step 1
+	scroll-conservatively 10000)
+  (setq-default rainbow-delimiters-mode t)
 
-(setq initial-scratch-message nil)
+  (setq initial-scratch-message nil)
 
-(setq-default c-default-style "linux"
-			c-basic-offset 4)
+  (setq-default c-default-style "linux"
+			  c-basic-offset 4)
 
-(add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
-(add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
-(add-hook 'ielm-mode-hook 'eldoc-mode)
+  (diredfl-global-mode)
+  (setq-default tab-width 4)
+  (setq column-number-mode t)
 
-(setq-default tab-width 4)
-(setq column-number-mode t)
+  (electric-pair-mode 1)
+  (delete-selection-mode)
 
-(electric-pair-mode 1)
-(delete-selection-mode)
-
-(setq-default color-identifiers-mode 1)
-(setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
-(setq neo-smart-open t)
+  (setq-default color-identifiers-mode 1)
+  (setcdr (assoc 'counsel-M-x ivy-initial-inputs-alist) "")
+  (setq neo-smart-open t)
+  (setq dired-dwim-target t)
 
 #+end_src
 
 ** Emacs System
 #+begin_src emacs-lisp
+  (setq cur-keyboard-layout 1)
 
-(setq cur-keyboard-layout 1)
-
-(setq backup-directory-alist `(("." . "~/.emacs.d/.backups")))
-(setq delete-old-versions t
-  kept-new-versions 10
-  kept-old-versions 5)
+  (setq backup-directory-alist `(("." . "~/.emacs.d/.backups")))
+  (setq delete-old-versions t
+	kept-new-versions 10
+	kept-old-versions 5)
   #+end_src
 * Macro Inserts
 ** Emacs Helper Macros
@@ -494,25 +491,38 @@
 ** Editing Modes Hooks
 #+begin_src emacs-lisp
 
-  (add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
-  (add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
-  (add-hook 'ielm-mode-hook 'eldoc-mode)
-  (add-hook 'sh-mode-hook #'my-sh-hook)
-  
+(add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
+(add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
+(add-hook 'ielm-mode-hook 'eldoc-mode)
+(add-hook 'sh-mode-hook #'my-sh-hook)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(add-hook 'org-mode-hook 'display-line-numbers-mode)
+ 
 #+end_src
 * Keybindings
 ** Base Emacs Bindings
 #+begin_src emacs-lisp
-(global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key (kbd "M-<tab>") 'switch-to-next-file-buffer)
-(global-set-key (kbd "M-<backspace>") 'switch-to-last-buffer)
-(global-set-key (kbd "C-x w q") 'delete-window)
-(global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
-(global-set-key (kbd "C-S-<return>") 'eshell)
-(global-set-key (kbd "C-<tab>") 'other-window)
-(global-set-key (kbd "M-<return>") 'switch-keyboard-layout)
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-(global-set-key (kbd "C-s") 'save-buffer)
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (global-set-key (kbd "M-<tab>") 'switch-to-next-file-buffer)
+  (global-set-key (kbd "M-<backspace>") 'switch-to-last-buffer)
+  (global-set-key (kbd "C-x w q") 'delete-window)
+  (global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
+  (global-set-key (kbd "C-S-<return>") 'eshell)
+  (global-set-key (kbd "C-<tab>") 'other-window)
+  (global-set-key (kbd "<f4>") 'switch-keyboard-layout)
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+  (global-set-key (kbd "C-s") 'save-buffer)
+  (global-set-key (kbd "C-f") 'swiper-isearch)
+  (global-set-key (kbd "<print>") 'take-screenshot)
+#+end_src
+
+** EXWM
+#+begin_src emacs-lisp
+  (exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
+  (exwm-input-set-key (kbd "s-p") 'counsel-linux-app)
+  (exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
+  (exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
+  (exwm-input-set-key (kbd "s-<return>") 'vterm)
 #+end_src
 
 ** Editor Bindins
@@ -588,5 +598,71 @@
 (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
 (global-set-key (kbd "<f2> j") 'counsel-set-variable)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+#+end_src
+
+* Eshell
+#+begin_src emacs-lisp
+(setq eshell-history-size 1024)
+(setq eshell-prompt-regexp "^[^#$]*[#$] ")
+
+(load "em-hist")           ; So the history vars are defined
+(if (boundp 'eshell-save-history-on-exit)
+    (setq eshell-save-history-on-exit t)) ; Don't ask, just save
+;(message "eshell-ask-to-save-history is %s" eshell-ask-to-save-history)
+(if (boundp 'eshell-ask-to-save-history)
+    (setq eshell-ask-to-save-history 'always)) ; For older(?) version
+;(message "eshell-ask-to-save-history is %s" eshell-ask-to-save-history)
+
+(defun eshell/ef (fname-regexp &rest dir) (ef fname-regexp default-directory))
+
+
+;;; ---- path manipulation
+
+(defun pwd-repl-home (pwd)
+  (interactive)
+  (let* ((home (expand-file-name (getenv "HOME")))
+   (home-len (length home)))
+    (if (and
+   (>= (length pwd) home-len)
+   (equal home (substring pwd 0 home-len)))
+  (concat "~" (substring pwd home-len))
+      pwd)))
+
+(defun curr-dir-git-branch-string (pwd)
+  "Returns current git branch as a string, or the empty string if
+PWD is not in a git repo (or the git command is not found)."
+  (interactive)
+  (when (and (eshell-search-path "git")
+             (locate-dominating-file pwd ".git"))
+    (let ((git-output (shell-command-to-string (concat "cd " pwd " && git branch | grep '\\*' | sed -e 's/^\\* //'"))))
+      (propertize (concat "["
+              (if (> (length git-output) 0)
+                  (substring git-output 0 -1)
+                "(no branch)")
+              "]") 'face `(:foreground "green"))
+      )))
+
+(setq eshell-prompt-function
+      (lambda ()
+        (concat
+         (propertize ((lambda (p-lst)
+            (if (> (length p-lst) 3)
+                (concat
+                 (mapconcat (lambda (elm) (if (zerop (length elm)) ""
+                                            (substring elm 0 1)))
+                            (butlast p-lst 3)
+                            "/")
+                 "/"
+                 (mapconcat (lambda (elm) elm)
+                            (last p-lst 3)
+                            "/"))
+              (mapconcat (lambda (elm) elm)
+                         p-lst
+                         "/")))
+          (split-string (pwd-repl-home (eshell/pwd)) "/")) 'face `(:foreground "yellow"))
+         (or (curr-dir-git-branch-string (eshell/pwd)))
+         (propertize ">\n" 'face 'default))))
+
+(setq eshell-highlight-prompt t)
 #+end_src
 
