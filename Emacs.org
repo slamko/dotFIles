@@ -30,13 +30,10 @@
   (tooltip-mode -1)
   (menu-bar-mode -1)
   (add-hook 'after-init-hook 'global-color-identifiers-mode)
+
   (font-lock-add-keywords 'c-mode
-				   '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
-
-  (smooth-scrolling-mode 1)
-  (load-theme 'doom-dark+ t)
-  (display-time)
-
+				 '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
+  
   (custom-set-variables
    ;; custom-set-variables was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
@@ -70,7 +67,7 @@
 	:ensure t
 	:config
 	(add-hook 'after-init-hook 'global-company-mode))
-  
+
   (use-package doom-themes)
   (use-package smooth-scrolling)
 
@@ -98,9 +95,11 @@
 	:init
 	(setq lsp-keymap-prefix "C-c l")
 	:hook (
-		   (c-mode . lsp))
+		   (c-mode . lsp)
+		   (dockerfile-mode . lsp))
 	:commands lsp)
-
+  (use-package dockerfile-mode)
+  
   (use-package projectile
 	:diminish projectile-mode
 	:config (projectile-mode)
@@ -217,6 +216,10 @@
   (setq neo-smart-open t)
   (setq dired-dwim-target t)
 
+  (smooth-scrolling-mode 1)
+  (load-theme 'doom-dark+ t)
+  (display-time)
+  
 #+end_src
 
 ** Emacs System
@@ -514,15 +517,51 @@
   (global-set-key (kbd "C-s") 'save-buffer)
   (global-set-key (kbd "C-f") 'swiper-isearch)
   (global-set-key (kbd "<print>") 'take-screenshot)
+  (global-set-key (kbd "M-r") 'eval-region)
 #+end_src
 
 ** EXWM
 #+begin_src emacs-lisp
-  (exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
-  (exwm-input-set-key (kbd "s-p") 'counsel-linux-app)
-  (exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
-  (exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
-  (exwm-input-set-key (kbd "s-<return>") 'vterm)
+			(exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
+			(exwm-input-set-key (kbd "s-p") 'counsel-linux-app)
+			(exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
+			(exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
+			(exwm-input-set-key (kbd "s-<return>") 'vterm)
+			(exwm-input-set-key (kdb "s-m") 'exwm-workspace-move)
+			(exwm-input-set-key (kbd "s-`")
+								(lambda ()
+								  (interactive)
+								  (exwm-workspace-switch-create 0)))
+
+			(exwm-input-set-key (kbd "s-~")
+								(lambda ()
+								  (interactive)
+								  (exwm-workspace-move exwm-workspace--current 0)
+								  (message "moved to workspace 0")))
+
+			(exwm-input-set-key (kbd "s-!")
+								(lambda ()
+								  (interactive)
+								  (exwm-workspace-move exwm-workspace--current 1)
+								  (message "moved to workspace 1")))
+
+			(exwm-input-set-key (kbd "s-)")
+								(lambda ()
+								  (interactive)
+								  (exwm-workspace-move exwm-workspace--current 0)
+								  (message "moved to workspace 0")))
+
+			(exwm-input-set-key (kbd "s-@")
+								(lambda ()
+								  (interactive)
+								  (exwm-workspace-move exwm-workspace--current 2)
+								  (message "moved to workspace 2")))
+
+			(exwm-input-set-key (kbd "s-#")
+								(lambda ()
+								  (interactive)
+								  (exwm-workspace-move exwm-workspace--current 3)
+								  (message "moved to workspace 3"))
 #+end_src
 
 ** Editor Bindins
@@ -661,7 +700,7 @@ PWD is not in a git repo (or the git command is not found)."
                          "/")))
           (split-string (pwd-repl-home (eshell/pwd)) "/")) 'face `(:foreground "yellow"))
          (or (curr-dir-git-branch-string (eshell/pwd)))
-         (propertize ">\n" 'face 'default))))
+         (propertize " λ\n" 'face 'default))))
 
 (setq eshell-highlight-prompt t)
 #+end_src
