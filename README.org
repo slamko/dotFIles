@@ -1,0 +1,2 @@
+* A collection of my personal config files written in Emacs' Org mode.
+  Includes Emacs, GDB, git and bash config files.
