@@ -122,12 +122,6 @@
 
   (use-package preproc-font-lock)
 
-  (use-package which-key
-	:init (which-key-mode)
-	:diminish which-key-mode
-	:config
-	(setq which-key-idle-delay 1))
-
   (use-package ivy-rich
 	:init
 	(ivy-rich-mode 1))
@@ -162,31 +156,80 @@
 ** Org Mode
 #+begin_src emacs-lisp
 
-(setq org-ellipsis " ▾"
-	    org-support-shift-select t
-        org-src-fontify-natively t
-        org-fontify-quote-and-verse-blocks t
-        org-src-tab-acts-natively t
-        org-edit-src-content-indentation 2
-        org-hide-block-startup nil
-        org-src-preserve-indentation nil
-        org-startup-folded 'content
-        org-cycle-separator-lines 2
-        org-capture-bookmark nil)
+  (setq org-ellipsis " ▾"
+		  org-support-shift-select t
+		  org-src-fontify-natively t
+		  org-fontify-quote-and-verse-blocks t
+		  org-src-tab-acts-natively t
+		  org-edit-src-content-indentation 2
+		  org-hide-block-startup nil
+		  org-src-preserve-indentation nil
+		  org-startup-folded 'content
+		  org-cycle-separator-lines 2
+		  org-capture-bookmark nil)
 
 
 
-(org-babel-do-load-languages
-  'org-babel-load-languages
-  '((emacs-lisp . t)))
+  (org-babel-do-load-languages
+	'org-babel-load-languages
+	'((emacs-lisp . t)))
 
 
-(add-to-list 'org-structure-template-alist '("sh" . "src sh"))
-(add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-(add-to-list 'org-structure-template-alist '("li" . "src lisp"))
-(add-to-list 'org-structure-template-alist '("py" . "src python"))
-(add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
-(add-to-list 'org-structure-template-alist '("json" . "src json"))
+  (add-to-list 'org-structure-template-alist '("sh" . "src sh"))
+  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+  (add-to-list 'org-structure-template-alist '("li" . "src lisp"))
+  (add-to-list 'org-structure-template-alist '("py" . "src python"))
+  (add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
+  (add-to-list 'org-structure-template-alist '("json" . "src json"))
+
+(with-eval-after-load "org"
+  (when (version-list-= (version-to-list org-version) '(9 4 3))
+    (defun org-return-fix (fun &rest args)
+      "Fix https://emacs.stackexchange.com/questions/64886."
+      (let* ((context (if org-return-follows-link (org-element-context)
+            (org-element-at-point)))
+             (element-type (org-element-type context)))
+    (if (eq element-type 'src-block)
+        (apply #'org--newline args)
+      (apply fun args))))
+    (advice-add 'org-return :around #'org-return-fix)))
+
+(with-eval-after-load "org-src"
+  (when (version-list-= (version-to-list org-version) '(9 4 3))
+    (defun org-src--contents-for-write-back ()
+      "Return buffer contents in a format appropriate for write back.
+Assume point is in the corresponding edit buffer."
+      (let ((indentation-offset
+         (if org-src--preserve-indentation 0
+           (+ (or org-src--block-indentation 0)
+          (if (memq org-src--source-type '(example-block src-block))
+              org-src--content-indentation
+            0))))
+        (use-tabs? (and (> org-src--tab-width 0) t))
+        (source-tab-width org-src--tab-width)
+        (contents (org-with-wide-buffer (buffer-string)))
+        (write-back org-src--allow-write-back))
+    (with-temp-buffer
+      ;; Reproduce indentation parameters from source buffer.
+      (setq indent-tabs-mode use-tabs?)
+      (when (> source-tab-width 0) (setq tab-width source-tab-width))
+      ;; Apply WRITE-BACK function on edit buffer contents.
+      (insert (org-no-properties contents))
+      (goto-char (point-min))
+      (when (functionp write-back) (save-excursion (funcall write-back)))
+      ;; Add INDENTATION-OFFSET to every non-empty line in buffer,
+      ;; unless indentation is meant to be preserved.
+      (when (> indentation-offset 0)
+        (while (not (eobp))
+          (skip-chars-forward " \t")
+          ;; (unless (eolp)     ;ignore blank lines
+          (let ((i (current-column)))
+        (delete-region (line-beginning-position) (point))
+        (indent-to (+ i indentation-offset)))
+          ;;)
+          (forward-line)))
+      (buffer-string))))))
+(setq org-src-preserve-indentation t)
 
 #+end_src
 ** UI
@@ -218,8 +261,9 @@
 
   (smooth-scrolling-mode 1)
   (load-theme 'doom-dark+ t)
+  (setq display-time-default-load-average nil)
   (display-time)
-  
+
 #+end_src
 
 ** Emacs System
@@ -404,56 +448,61 @@
 ** Text Editing
 #+begin_src emacs-lisp
 
-(defun toggle-comment-on-line ()
-  (interactive)
-  (comment-or-uncomment-region (line-beginning-position) (line-end-position)))
+  (defun toggle-comment-on-line ()
+	(interactive)
+	(comment-or-uncomment-region (line-beginning-position) (line-end-position)))
 
 
-(defun dublicate-line ()
-  (interactive)
-  (dup-line))
+  (defun dublicate-line ()
+	(interactive)
+	(dup-line))
 
-(defun dublicate-multiple ()
-  (interactive)
-  (dotimes (c (read-number "Count: " 1))
-	(dup-line)))
+  (defun dublicate-multiple ()
+	(interactive)
+	(dotimes (c (read-number "Count: " 1))
+	  (dup-line)))
 
-(defun dublicate-region ()
-  (interactive)
-  (clipboard-kill-region (mark) (point))
-  (yank)
-  (yank))
+  (defun dublicate-region ()
+	(interactive)
+	(clipboard-kill-region (mark) (point))
+	(yank)
+	(yank))
 
-(defun dublicate-region-multiple ()
-  (interactive)
-  (clipboard-kill-region (mark) (point))
-  (yank)
-  (dotimes (c (read-number "Count: " 1))
-	  (yank)))
+  (defun dublicate-region-multiple ()
+	(interactive)
+	(clipboard-kill-region (mark) (point))
+	(yank)
+	(dotimes (c (read-number "Count: " 1))
+		(yank)))
 
-(defun insert-next-line ()
-  (interactive)
-  (move-end-of-line nil)
-  (newline-and-indent))
+  (defun insert-next-line ()
+	(interactive)
+	(move-end-of-line nil)
+	(newline-and-indent))
 
-(defun insert-up-line ()
-  (interactive)
-  (beginning-of-line)
-  (newline-and-indent)
-  (previous-line))
+  (defun insert-up-line ()
+	(interactive)
+	(beginning-of-line)
+	(newline-and-indent)
+	(previous-line))
 
-(defun backward-up-sexp (arg)
-  (interactive "p")
-  (let ((ppss (syntax-ppss)))
-    (cond ((elt ppss 3)
-           (goto-char (elt ppss 8))
-           (backward-up-sexp (1- arg)))
-          ((backward-up-list arg)))))
+  (defun backward-up-sexp (arg)
+	(interactive "p")
+	(let ((ppss (syntax-ppss)))
+	  (cond ((elt ppss 3)
+			 (goto-char (elt ppss 8))
+			 (backward-up-sexp (1- arg)))
+			((backward-up-list arg)))))
 
-(defun kill-untill-end-line ()
-  (interactive)
-  (kill-till-end-line))
-  
+  (defun kill-untill-end-line ()
+	(interactive)
+	(kill-till-end-line))
+
+  (defun lscr--jump ()
+	(interactive)
+	(pop-to-mark-command)
+	(keyboard-quit))
+
 #+end_src
 ** Keybindings Shortcut
 #+begin_src emacs-lisp
@@ -527,7 +576,7 @@
 			(exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
 			(exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
 			(exwm-input-set-key (kbd "s-<return>") 'vterm)
-			(exwm-input-set-key (kdb "s-m") 'exwm-workspace-move)
+			(exwm-input-set-key (kbd "s-m") 'exwm-workspace-move)
 			(exwm-input-set-key (kbd "s-`")
 								(lambda ()
 								  (interactive)
@@ -561,7 +610,7 @@
 								(lambda ()
 								  (interactive)
 								  (exwm-workspace-move exwm-workspace--current 3)
-								  (message "moved to workspace 3"))
+								  (message "moved to workspace 3")))
 #+end_src
 
 ** Editor Bindins
@@ -569,7 +618,6 @@
 #+begin_src emacs-lisp
 
 (global-set-key (kbd "C-p") 'yank)
-(global-set-key (kbd "C-u") 'undo)
 (global-set-key (kbd "C-S-Q") 'kill-current-buffer)
 (global-set-key (kbd "M-<up>") 'move-text-up)
 (global-set-key (kbd "M-<down>") 'move-text-down)
@@ -590,15 +638,16 @@
 
 *** Text Navigation
 #+begin_src emacs-lisp
-(global-set-key (kbd "C-h") 'left-char)
-(global-set-key (kbd "C-j") 'next-line)
-(global-set-key (kbd "C-k") 'previous-line)
-(global-set-key (kbd "C-l") 'right-char)
-(global-set-key (kbd "C-n") 'forward-char)
-(global-set-key (kbd "M-n") 'forward-word)
-(global-set-key (kbd "C-{") 'beginning-of-buffer)
-(global-set-key (kbd "C-}") 'end-of-buffer)
-(global-set-key (kbd "C-:") 'goto-line)
+  (global-set-key (kbd "C-h") 'left-char)
+  (global-set-key (kbd "C-j") 'next-line)
+  (global-set-key (kbd "C-k") 'previous-line)
+  (global-set-key (kbd "C-l") 'right-char)
+  (global-set-key (kbd "C-n") 'forward-char)
+  (global-set-key (kbd "M-n") 'forward-word)
+  (global-set-key (kbd "C-{") 'beginning-of-buffer)
+  (global-set-key (kbd "C-}") 'end-of-buffer)
+  (global-set-key (kbd "C-:") 'goto-line)
+  (global-set-key (kbd "C-x C-x") 'lscr--jump)
 #+end_src
 ** Packages Setup Bindings
 *** Lsp
@@ -615,14 +664,15 @@
 
 *** Magit
 #+begin_src emacs-lisp
-(define-prefix-command 'magit-map)
-(global-set-key (kbd "C-'") 'magit-map)
-(define-key magit-map (kbd "c") 'magit-commit)
-(define-key magit-map (kbd "s") 'magit)
-(define-key magit-map (kbd "m") 'magit-stage-modified)
-(define-key magit-map (kbd "a") 'magit-stage-all)
-(define-key magit-map (kbd "p") 'magit-push)
-(define-key magit-map (kbd "f") 'magit-pull)
+  (define-prefix-command 'magit-map)
+  (global-set-key (kbd "C-'") 'magit-map)
+  (define-key magit-map (kbd "c") 'magit-commit)
+  (define-key magit-map (kbd "s") 'magit)
+  (define-key magit-map (kbd "m") 'magit-stage-modified)
+  (define-key magit-map (kbd "a") 'magit-stage-all)
+  (define-key magit-map (kbd "p") 'magit-push)
+  (define-key magit-map (kbd "f") 'magit-pull)
+
 #+end_src
 
 *** Counsel
@@ -637,6 +687,10 @@
 (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
 (global-set-key (kbd "<f2> j") 'counsel-set-variable)
 (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
+(global-set-key (kbd "C-x C-a") 'counsel-mark-ring)
+
+
+
 #+end_src
 
 * Eshell
