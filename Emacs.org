@@ -110,8 +110,7 @@
   (use-package counsel-projectile
 	:config (counsel-projectile-mode))
 
-  ;; (use-package lsp-ui)
-
+  (load-file "~/.emacs.d/bon-app-launcher/bon-app-launcher.el")
   (use-package move-text)
   (use-package doom-modeline
 	:ensure t
@@ -135,6 +134,7 @@
 
   (require 'org-tempo)
 
+  (use-package mode-icons)
 #+end_src
 * Variables Setup
 ** EXWM
@@ -369,7 +369,11 @@ Assume point is in the corresponding edit buffer."
 	(concat "/home/slamko/Pictures/" (read-string "Screenshot name: "))))
 
 (defun run-auto-start ()
-  (call-process "/bin/bash" "~/.wm-startup.sh"))
+  (start-process-shell-command "killall nm-applet")
+  (start-process-shell-command "killall pnmixer")
+  (start-porcess-shell-command "nm-applet &")
+  (start-porcess-shell-command "pnmixer &")
+  (start-process-shell-command "pulseaudio --start --log-target=syslog"))
 
 (defun start-message ()
   (message "Welcome back to the Church, my child."))
@@ -571,46 +575,49 @@ Assume point is in the corresponding edit buffer."
 
 ** EXWM
 #+begin_src emacs-lisp
-			(exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
-			(exwm-input-set-key (kbd "s-p") 'counsel-linux-app)
-			(exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
-			(exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
-			(exwm-input-set-key (kbd "s-<return>") 'vterm)
-			(exwm-input-set-key (kbd "s-m") 'exwm-workspace-move)
-			(exwm-input-set-key (kbd "s-`")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-switch-create 0)))
+(exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
+(exwm-input-set-key (kbd "s-p") 'bon-app-launcher)
+(exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
+(exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
+(exwm-input-set-key (kbd "s-<return>") 'vterm)
+(exwm-input-set-key (kbd "s-m") 'exwm-workspace-move)
+(exwm-input-set-key (kbd "s-c") 'kill-current-buffer)
+(exwm-input-set-key (kbd "s-q") 'save-buffer-kill-terminal)
 
-			(exwm-input-set-key (kbd "s-~")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 0)
-								  (message "moved to workspace 0")))
+(exwm-input-set-key (kbd "s-`")
+						(lambda ()
+						  (interactive)
+						  (exwm-workspace-switch-create 0)))
 
-			(exwm-input-set-key (kbd "s-!")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 1)
-								  (message "moved to workspace 1")))
+(exwm-input-set-key (kbd "s-~")
+				(lambda ()
+				  (interactive)
+						  (exwm-workspace-move exwm-workspace--current 0)
+						  (message "moved to workspace 0")))
 
-			(exwm-input-set-key (kbd "s-)")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 0)
-								  (message "moved to workspace 0")))
+(exwm-input-set-key (kbd "s-!")
+						(lambda ()
+						  (interactive)
+						  (exwm-workspace-move exwm-workspace--current 1)
+						  (message "moved to workspace 1")))
 
-			(exwm-input-set-key (kbd "s-@")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 2)
-								  (message "moved to workspace 2")))
+(exwm-input-set-key (kbd "s-)")
+						(lambda ()
+						  (interactive)
+						  (exwm-workspace-move exwm-workspace--current 0)
+						  (message "moved to workspace 0")))
 
-			(exwm-input-set-key (kbd "s-#")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 3)
-								  (message "moved to workspace 3")))
+(exwm-input-set-key (kbd "s-@")
+						(lambda ()
+						  (interactive)
+						  (exwm-workspace-move exwm-workspace--current 2)
+						  (message "moved to workspace 2")))
+
+(exwm-input-set-key (kbd "s-#")
+						(lambda ()
+						  (interactive)
+						  (exwm-workspace-move exwm-workspace--current 3)
+						  (message "moved to workspace 3")))
 #+end_src
 
 ** Editor Bindins
@@ -618,7 +625,6 @@ Assume point is in the corresponding edit buffer."
 #+begin_src emacs-lisp
 
 (global-set-key (kbd "C-p") 'yank)
-(global-set-key (kbd "C-S-Q") 'kill-current-buffer)
 (global-set-key (kbd "M-<up>") 'move-text-up)
 (global-set-key (kbd "M-<down>") 'move-text-down)
 (global-set-key (kbd "M-k") 'move-text-up)
