@@ -87,6 +87,10 @@
   (use-package color-identifiers-mode)
   (use-package rainbow-delimiters)
   (use-package diredfl)
+  (use-package swiper
+	:ensure t
+	:custom
+	(setq swiper-include-line-number-in-search t))
 
   (use-package multiple-cursors)
   (use-package command-log-mode)
@@ -151,7 +155,7 @@
 		?\M-x))
 		
 (setq global-exwm-mode-var 3)
-(setq global-exwm-workspace-num 1)
+(setq global-exwm-workspace-num 5)
 (display-battery-mode)
 #+end_src
 
@@ -249,6 +253,7 @@ Assume point is in the corresponding edit buffer."
   (setq-default c-default-style "linux"
 			  c-basic-offset 4)
 
+  (setq-default swiper-include-line-number-in-search t)
   (diredfl-global-mode)
   (setq-default tab-width 4)
   (setq column-number-mode t)
@@ -288,6 +293,9 @@ Assume point is in the corresponding edit buffer."
 ** Text Editing
 #+begin_src emacs-lisp
 
+(fset 'kill-till-start-of-line
+   (kmacro-lambda-form [?\S-\C-a backspace] 0 "%d"))
+
 (fset 'dup-line
 	(kmacro-lambda-form [?\C-a ?\S-\C-e ?\C-c ?c return ?\C-v] 0 "%d"))
 
@@ -295,6 +303,9 @@ Assume point is in the corresponding edit buffer."
 (fset 'kill-till-end-line
 	(kmacro-lambda-form [?\S-\C-e backspace] 0 "%d"))
 
+#+end_src
+** Mode Specific Macros
+#+begin_src emacs-lisp
 #+end_src
 * Function definitions
 ** Emacs Setup Functions
@@ -371,9 +382,8 @@ Assume point is in the corresponding edit buffer."
 	(concat "/home/slamko/Pictures/" (read-string "Screenshot name: "))))
 
 (defun run-auto-start ()
-  (start-process-shell-command "killall" nil "killall nm-applet ; killall pnmxier")
-  (start-process-shell-command "nm-applet" nil "nm-applet &")
-  (start-process-shell-command "pnmixer" nil "pnmixer &"))
+  (interactive)
+  (message "startuem"))
 
 (defun start-message ()
   (message "Welcome back to the Church, my child."))
@@ -422,6 +432,10 @@ Assume point is in the corresponding edit buffer."
       (if (equal global-exwm-mode-var 3) 
           (fhd/exwm-input-char-mode)
         (fhd/exwm-input-line-mode)))))
+
+(defun goto-last-heading ()
+  (interactive)
+  (org-end-of-subtree))
 
 #+end_src
 ** Packages setup functions
@@ -488,7 +502,8 @@ Assume point is in the corresponding edit buffer."
 	(interactive)
 	(beginning-of-line)
 	(newline-and-indent)
-	(previous-line))
+	(previous-line)
+	(indent-relative))
 
   (defun backward-up-sexp (arg)
 	(interactive "p")
@@ -502,13 +517,25 @@ Assume point is in the corresponding edit buffer."
 	(interactive)
 	(kill-till-end-line))
 
+  (defun kill-untill-start-of-line ()
+	(interactive)
+	(kill-till-start-line))
+
   (defun lscr--jump ()
 	(interactive)
 	(pop-to-mark-command)
 	(keyboard-quit))
 
+  (defun swiper-isearch-selected ()
+	"Use region as the isearch text."
+	(interactive)
+	(if mark-active
+	  (swiper-isearch (funcall region-extract-function nil))
+	  (swiper-isearch)))
+
 #+end_src
-** Keybindings Shortcut
+* Keybindings
+** Init
 #+begin_src emacs-lisp
 
 (defun init-mode-specific-map ()
@@ -525,37 +552,6 @@ Assume point is in the corresponding edit buffer."
   (define-key mode-specific-map (kbd "C-M-d") 'dublicate-region-multiple))
 
 #+end_src
-* Hooks Setup
-** Init Hooks
-#+begin_src emacs-lisp
-
-  (init-mode-specific-map)
-  (add-hook 'after-init-hook 'global-color-identifiers-mode)
-  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
-  (add-hook 'term-exec-hook 'set-no-process-query-on-exit)
-  
-#+end_src
-** EXWM
-#+begin_src emacs-lisp
-(add-hook 'exwm-init-hook 'start-message)
-(add-hook 'exwm-init-hook 'run-auto-start)
-#+end_src
-** Lsp
-#+begin_src emacs-lisp
-(add-hook 'lsp-mode-hook 'init-mode-specific-map)
-#+end_src
-** Editing Modes Hooks
-#+begin_src emacs-lisp
-
-(add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
-(add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
-(add-hook 'ielm-mode-hook 'eldoc-mode)
-(add-hook 'sh-mode-hook #'my-sh-hook)
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
-(add-hook 'org-mode-hook 'display-line-numbers-mode)
- 
-#+end_src
-* Keybindings
 ** Base Emacs Bindings
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -568,61 +564,66 @@ Assume point is in the corresponding edit buffer."
   (global-set-key (kbd "<f4>") 'switch-keyboard-layout)
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
   (global-set-key (kbd "C-s") 'save-buffer)
-  (global-set-key (kbd "C-f") 'swiper-isearch)
+  (global-set-key (kbd "C-f") 'swiper-isearch-selected)
   (global-set-key (kbd "<print>") 'take-screenshot)
   (global-set-key (kbd "M-r") 'eval-region)
 #+end_src
 
 ** EXWM
 #+begin_src emacs-lisp
-			(exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
-			(exwm-input-set-key (kbd "s-c") 'kill-current-buffer)
-			(exwm-input-set-key (kbd "s-p") 'bon-app-launcher)
-			(exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
-			(exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
-			(exwm-input-set-key (kbd "s-<return>") 'vterm)
-			(exwm-input-set-key (kbd "s-m") 'exwm-workspace-move)
-			(exwm-input-set-key (kbd "s-`")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-switch-create 0)))
+(exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
+(exwm-input-set-key (kbd "s-c") 'kill-current-buffer)
+(exwm-input-set-key (kbd "s-p") 'bon-app-launcher)
+(exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
+(exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
+(exwm-input-set-key (kbd "s-<return>") 'vterm)
+(exwm-input-set-key (kbd "s-m") 'exwm-workspace-move)
+(exwm-input-set-key (kbd "s-`")
+					(lambda ()
+					  (interactive)
+					  (exwm-workspace-switch-create 0)))
 
-			(exwm-input-set-key (kbd "s-~")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 0)
-								  (message "moved to workspace 0")))
+(exwm-input-set-key (kbd "s-~")
+					(lambda ()
+					  (interactive)
+					  (exwm-workspace-move exwm-workspace--current 0)
+					  (message "moved to workspace 0")))
 
-			(exwm-input-set-key (kbd "s-!")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 1)
-								  (message "moved to workspace 1")))
+(exwm-input-set-key (kbd "s-!")
+					(lambda ()
+					  (interactive)
+					  (exwm-workspace-move exwm-workspace--current 1)
+					  (message "moved to workspace 1")))
 
-			(exwm-input-set-key (kbd "s-)")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 0)
-								  (message "moved to workspace 0")))
+(exwm-input-set-key (kbd "s-)")
+					(lambda ()
+					  (interactive)
+					  (exwm-workspace-move exwm-workspace--current 0)
+					  (message "moved to workspace 0")))
 
-			(exwm-input-set-key (kbd "s-@")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 2)
-								  (message "moved to workspace 2")))
+(exwm-input-set-key (kbd "s-@")
+					(lambda ()
+					  (interactive)
+					  (exwm-workspace-move exwm-workspace--current 2)
+					  (message "moved to workspace 2")))
 
-			(exwm-input-set-key (kbd "s-#")
-								(lambda ()
-								  (interactive)
-								  (exwm-workspace-move exwm-workspace--current 3)
-								  (message "moved to workspace 3")))
+(exwm-input-set-key (kbd "s-#")
+					(lambda ()
+					  (interactive)
+					  (exwm-workspace-move exwm-workspace--current 3)
+					  (message "moved to workspace 3")))
 #+end_src
 
+** Org Mode
+#+begin_src emacs-lisp
+(defalias 'org-goto 'counsel-org-goto)
+#+end_src
 ** Editor Bindins
 *** Text Editing
 #+begin_src emacs-lisp
 
 (global-set-key (kbd "C-p") 'kill-ring-save)
+(global-set-key (kbd "C-u") 'kill-till-start-line)
 (global-set-key (kbd "C-S-Q") 'kill-current-buffer)
 (global-set-key (kbd "M-<up>") 'move-text-up)
 (global-set-key (kbd "M-<down>") 'move-text-down)
@@ -697,21 +698,39 @@ Assume point is in the corresponding edit buffer."
 
 #+end_src
 
-* Eshell
+* Hooks Setup
+** Init Hooks
 #+begin_src emacs-lisp
-(setq eshell-history-size 1024)
-(setq eshell-prompt-regexp "^[^#$]*[#$] ")
 
-(load "em-hist")           ; So the history vars are defined
-(if (boundp 'eshell-save-history-on-exit)
-    (setq eshell-save-history-on-exit t)) ; Don't ask, just save
-;(message "eshell-ask-to-save-history is %s" eshell-ask-to-save-history)
-(if (boundp 'eshell-ask-to-save-history)
-    (setq eshell-ask-to-save-history 'always)) ; For older(?) version
-;(message "eshell-ask-to-save-history is %s" eshell-ask-to-save-history)
-
+  (init-mode-specific-map)
+  (add-hook 'after-init-hook 'global-color-identifiers-mode)
+  (add-hook 'prog-mode-hook 'display-line-numbers-mode)
+  (add-hook 'term-exec-hook 'set-no-process-query-on-exit)
+  
+#+end_src
+** EXWM
+#+begin_src emacs-lisp
+(add-hook 'exwm-init-hook 'start-message)
+(add-hook 'exwm-init-hook 'run-auto-start)
+#+end_src
+** Lsp
+#+begin_src emacs-lisp
+(add-hook 'lsp-mode-hook 'init-mode-specific-map)
+#+end_src
+** Editing Modes Hooks
+#+begin_src emacs-lisp
+(add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
+(add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
+(add-hook 'ielm-mode-hook 'eldoc-mode)
+(add-hook 'sh-mode-hook #'my-sh-hook)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+(add-hook 'org-mode-hook 'display-line-numbers-mode)
+(add-hook 'org-mode-hook 'org-mode-bindings)
+#+end_src
+* Eshell
+** Eshell Prompt
+#+begin_src emacs-lisp
 (defun eshell/ef (fname-regexp &rest dir) (ef fname-regexp default-directory))
-
 
 ;;; ---- path manipulation
 
@@ -739,27 +758,47 @@ PWD is not in a git repo (or the git command is not found)."
               "]") 'face `(:foreground "green"))
       )))
 
-(setq eshell-prompt-function
-      (lambda ()
-        (concat
-         (propertize ((lambda (p-lst)
-            (if (> (length p-lst) 3)
-                (concat
-                 (mapconcat (lambda (elm) (if (zerop (length elm)) ""
-                                            (substring elm 0 1)))
-                            (butlast p-lst 3)
-                            "/")
-                 "/"
-                 (mapconcat (lambda (elm) elm)
-                            (last p-lst 3)
-                            "/"))
-              (mapconcat (lambda (elm) elm)
-                         p-lst
-                         "/")))
-          (split-string (pwd-repl-home (eshell/pwd)) "/")) 'face `(:foreground "yellow"))
-         (or (curr-dir-git-branch-string (eshell/pwd)))
-         (propertize " λ\n" 'face 'default))))
 
-(setq eshell-highlight-prompt t)
+(defun eshell-prompt ()
+  (concat
+   (propertize ((lambda (p-lst)
+      (if (> (length p-lst) 3)
+          (concat
+           (mapconcat (lambda (elm) (if (zerop (length elm)) ""
+                                      (substring elm 0 1)))
+                      (butlast p-lst 3)
+                      "/")
+           "/"
+           (mapconcat (lambda (elm) elm)
+                      (last p-lst 3)
+                      "/"))
+        (mapconcat (lambda (elm) elm)
+                   p-lst
+                   "/")))
+    (split-string (pwd-repl-home (eshell/pwd)) "/")) 'face `(:foreground "yellow"))
+   (or (curr-dir-git-branch-string (eshell/pwd)))
+   (propertize " λ\n" 'face 'default)))
+
 #+end_src
+** Shell Variables
+#+begin_src emacs-lisp
+(setq eshell-history-size 1024)
+(setq eshell-prompt-regexp "^[^#$]*[#$] ")
+(setq eshell-highlight-prompt t)
 
+(load "em-hist")           ; So the history vars are defined
+(if (boundp 'eshell-save-history-on-exit)
+    (setq eshell-save-history-on-exit t)) ; Don't ask, just save
+;(message "eshell-ask-to-save-history is %s" eshell-ask-to-save-history)
+(if (boundp 'eshell-ask-to-save-history)
+    (setq eshell-ask-to-save-history 'always)) ; For older(?) version
+;(message "eshell-ask-to-save-history is %s" eshell-ask-to-save-history)
+
+(setq eshell-prompt-function 'eshell-prompt)
+#+end_src
+** Aliases
+#+begin_src emacs-lisp
+(defalias 'emacs 'find-file)
+(defun eshell/emacs (file)
+    (find-file file))
+#+end_src
