@@ -56,21 +56,37 @@
 
 #+end_src
 * Packages Import
+** EXWM
 #+begin_src emacs-lisp
 
-  (require 'exwm)
+  (use-package exwm
+	:ensure t)
+
   (require 'exwm-config)
   (require 'exwm-systemtray)
   (require 'cl-lib)
 
-  (use-package company
-	:diminish company
-	:ensure t
-	:config
-	(add-hook 'after-init-hook 'global-company-mode))
+#+end_src
 
+** UI
+#+begin_src emacs-lisp
   (use-package doom-themes)
   (use-package smooth-scrolling)
+  (use-package rainbow-delimiters)
+  (use-package color-identifiers-mode)
+  (use-package all-the-icons
+	:ensure t)
+
+  (use-package doom-modeline
+	:ensure t
+	:init (doom-modeline-mode 1))
+
+  (use-package preproc-font-lock)
+
+#+end_src
+
+** Helper Packages
+#+begin_src emacs-lisp
 
   (use-package ivy
 	:diminish ivy-mode
@@ -84,13 +100,38 @@
   (use-package sh-script)
   (use-package bash-completion)
   (use-package vterm)
-  (use-package color-identifiers-mode)
-  (use-package rainbow-delimiters)
   (use-package diredfl)
   (use-package swiper
 	:ensure t
 	:custom
 	(setq swiper-include-line-number-in-search t))
+
+  (use-package projectile
+	:diminish projectile-mode
+	:config (projectile-mode)
+	:custom (projectile-completion-system 'ivy)
+	:bind-keymap
+	("C-c p" . projectile-command-map))
+
+  (use-package counsel-projectile
+	:config (counsel-projectile-mode))
+
+  (use-package ivy-rich
+	:init
+	(ivy-rich-mode 1))
+
+#+end_src
+
+** Programming Modes
+#+begin_src emacs-lisp
+
+  (use-package company
+	:diminish company
+	:ensure t
+	:config
+	(add-hook 'after-init-hook 'global-company-mode))
+
+  (use-package move-text)
 
   (use-package multiple-cursors)
   (use-package command-log-mode)
@@ -104,32 +145,11 @@
 		   (dockerfile-mode . lsp))
 	:commands lsp)
   (use-package dockerfile-mode)
-  
-  (use-package projectile
-	:diminish projectile-mode
-	:config (projectile-mode)
-	:custom (projectile-completion-system 'ivy)
-	:bind-keymap
-	("C-c p" . projectile-command-map))
 
-  (use-package counsel-projectile
-	:config (counsel-projectile-mode))
+#+end_src
 
-  ;; (use-package lsp-ui)
-
-  (use-package move-text)
-  (use-package doom-modeline
-	:ensure t
-	:init (doom-modeline-mode 1))
-
-  (use-package all-the-icons
-	:ensure t)
-
-  (use-package preproc-font-lock)
-
-  (use-package ivy-rich
-	:init
-	(ivy-rich-mode 1))
+** Org Mode
+#+begin_src emacs-lisp
 
   (use-package org)
 
@@ -382,8 +402,7 @@ Assume point is in the corresponding edit buffer."
 	(concat "/home/slamko/Pictures/" (read-string "Screenshot name: "))))
 
 (defun run-auto-start ()
-  (interactive)
-  (message "startuem"))
+  (interactive))
 
 (defun start-message ()
   (message "Welcome back to the Church, my child."))
@@ -725,7 +744,7 @@ Assume point is in the corresponding edit buffer."
 (add-hook 'sh-mode-hook #'my-sh-hook)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (add-hook 'org-mode-hook 'display-line-numbers-mode)
-(add-hook 'org-mode-hook 'org-mode-bindings)
+;;(add-hook 'org-mode-hook 'org-mode-bindings)
 #+end_src
 * Eshell
 ** Eshell Prompt
