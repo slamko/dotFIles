@@ -2,14 +2,17 @@
 #+PROPERTY: header-args:emacs-lisp :tangle "./init.el"
 
 * Package Manager Initialization
+** Add repositories
 #+begin_src emacs-lisp
-
-(require 'package)
-
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
+
 (add-to-list 'load-path "~/echurch/bon-app-launcher")
+#+end_src
+** Initialize Package 
+#+begin_src emacs-lisp
+(require 'package)
 
 (package-initialize)
 (unless package-archive-contents
@@ -17,42 +20,45 @@
 
 (unless (package-installed-p 'use-package)
 	(package-install 'use-package))
-
+#+end_src
+** Install use-package
+#+begin_src emacs-lisp
 (require 'use-package)
 (setq use-package-always-ensure t)
-
 #+end_src
-* Basic UI Configuration
+* Startup Configuration
+** UI
 #+begin_src emacs-lisp
+(setq inhibit-startup-message t)
+(scroll-bar-mode -1)
+(tool-bar-mode -1)
+(tooltip-mode -1)
+(menu-bar-mode -1)
+(add-hook 'after-init-hook 'global-color-identifiers-mode)
+#+end_src
+** Emacs Autogen
+#+begin_src emacs-lisp
+(font-lock-add-keywords 'c-mode
+						'(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
 
-  (setq inhibit-startup-message t)
-  (scroll-bar-mode -1)
-  (tool-bar-mode -1)
-  (tooltip-mode -1)
-  (menu-bar-mode -1)
-  (add-hook 'after-init-hook 'global-color-identifiers-mode)
-
-  (font-lock-add-keywords 'c-mode
-				 '(("\\<\\([a-zA-Z_]*\\) *("  1 font-lock-keyword-face)))
-  
-  (custom-set-variables
-   ;; custom-set-variables was added by Custom.
-   ;; If you edit it by hand, you could mess it up, so be careful.
-   ;; Your init file should contain only one such instance.
-   ;; If there is more than one, they won't work right.
-   '(c-basic-offset 'set-from-style t)
-   '(c-default-style '((c-mode . "c") (awk-mode . "awk") (other . "gnu")) t)
-   '(custom-safe-themes
-	 '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
-   '(package-selected-packages
-	 '(org-bullets command-log-mode counsel-projectile projectile ivy-rich screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
-   '(warning-suppress-types '((comp) (comp))))
-  (custom-set-faces
-   ;; custom-set-faces was added by Custom.
-   ;; If you edit it by hand, you could mess it up, so be careful.
-   ;; Your init file should contain only one such instance.
-   ;; If there is more than one, they won't work right.
-   )
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(c-basic-offset 'set-from-style t)
+ '(c-default-style '((c-mode . "c") (awk-mode . "awk") (other . "gnu")) t)
+ '(custom-safe-themes
+   '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
+ '(package-selected-packages
+   '(org-bullets command-log-mode counsel-projectile projectile ivy-rich screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+ '(warning-suppress-types '((comp) (comp))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 
 #+end_src
 * Packages Import
@@ -124,27 +130,29 @@
 
 ** Programming Modes
 #+begin_src emacs-lisp
+(use-package company
+  :diminish company
+  :ensure t
+  :config
+  (add-hook 'after-init-hook 'global-company-mode))
 
-  (use-package company
-	:diminish company
-	:ensure t
-	:config
-	(add-hook 'after-init-hook 'global-company-mode))
+(use-package move-text)
 
-  (use-package move-text)
+(use-package multiple-cursors)
+(use-package command-log-mode)
 
-  (use-package multiple-cursors)
-  (use-package command-log-mode)
+(use-package lua-mode)
 
-  (use-package flycheck)
-  (use-package lsp-mode
-	:init
-	(setq lsp-keymap-prefix "C-c l")
-	:hook (
-		   (c-mode . lsp)
-		   (dockerfile-mode . lsp))
-	:commands lsp)
-  (use-package dockerfile-mode)
+(use-package flycheck)
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (
+		 (c-mode . lsp)
+		 (lua-mode . lsp)
+		 (dockerfile-mode . lsp))
+  :commands lsp)
+(use-package dockerfile-mode)
 
 #+end_src
 
@@ -485,70 +493,78 @@ Assume point is in the corresponding edit buffer."
 ** Text Editing
 #+begin_src emacs-lisp
 
-  (defun toggle-comment-on-line ()
-	(interactive)
-	(comment-or-uncomment-region (line-beginning-position) (line-end-position)))
+(defun toggle-comment-on-line ()
+  (interactive)
+  (comment-or-uncomment-region (line-beginning-position) (line-end-position)))
 
+(defun dublicate-line ()
+  (interactive)
+  (dup-line))
 
-  (defun dublicate-line ()
-	(interactive)
-	(dup-line))
+(defun dublicate-multiple ()
+  (interactive)
+  (dotimes (c (read-number "Count: " 1))
+	(dup-line)))
 
-  (defun dublicate-multiple ()
-	(interactive)
-	(dotimes (c (read-number "Count: " 1))
-	  (dup-line)))
+(defun dublicate-region ()
+  (interactive)
+  (clipboard-kill-region (mark) (point))
+  (yank)
+  (yank))
 
-  (defun dublicate-region ()
-	(interactive)
-	(clipboard-kill-region (mark) (point))
-	(yank)
-	(yank))
+(defun dublicate-region-multiple ()
+  (interactive)
+  (clipboard-kill-region (mark) (point))
+  (yank)
+  (dotimes (c (read-number "Count: " 1))
+	(yank)))
 
-  (defun dublicate-region-multiple ()
-	(interactive)
-	(clipboard-kill-region (mark) (point))
-	(yank)
-	(dotimes (c (read-number "Count: " 1))
-		(yank)))
+(defun copy-line ()
+  (interactive)
+  (kill-whole-line)
+  (yank)
+  (save-buffer)
+  (previous-line)
+  (end-of-line)
+  (message "Add one line to kill ring"))
 
-  (defun insert-next-line ()
-	(interactive)
-	(move-end-of-line nil)
-	(newline-and-indent))
+(defun insert-next-line ()
+  (interactive)
+  (move-end-of-line nil)
+  (newline-and-indent))
 
-  (defun insert-up-line ()
-	(interactive)
-	(beginning-of-line)
-	(newline-and-indent)
-	(previous-line)
-	(indent-relative))
+(defun insert-up-line ()
+  (interactive)
+  (beginning-of-line)
+  (newline-and-indent)
+  (previous-line)
+  (indent-relative))
 
-  (defun backward-up-sexp (arg)
-	(interactive "p")
-	(let ((ppss (syntax-ppss)))
-	  (cond ((elt ppss 3)
-			 (goto-char (elt ppss 8))
-			 (backward-up-sexp (1- arg)))
-			((backward-up-list arg)))))
+(defun backward-up-sexp (arg)
+  (interactive "p")
+  (let ((ppss (syntax-ppss)))
+	(cond ((elt ppss 3)
+		   (goto-char (elt ppss 8))
+		   (backward-up-sexp (1- arg)))
+		  ((backward-up-list arg)))))
 
-  (defun kill-untill-end-line ()
-	(interactive)
-	(kill-till-end-line))
+(defun kill-untill-end-line ()
+  (interactive)
+  (kill-till-end-line))
 
-  (defun kill-untill-start-of-line ()
-	(interactive)
-	(kill-till-start-line))
+(defun kill-untill-start-of-line ()
+  (interactive)
+  (kill-till-start-line))
 
-  (defun lscr--jump ()
-	(interactive)
-	(pop-to-mark-command)
-	(keyboard-quit))
+(defun lscr--jump ()
+  (interactive)
+  (pop-to-mark-command)
+  (keyboard-quit))
 
-  (defun swiper-isearch-selected ()
-	"Use region as the isearch text."
-	(interactive)
-	(if mark-active
+(defun swiper-isearch-selected ()
+  "Use region as the isearch text."
+  (interactive)
+  (if mark-active
 	  (swiper-isearch (funcall region-extract-function nil))
 	  (swiper-isearch)))
 
