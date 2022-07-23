@@ -130,29 +130,45 @@
 
 ** Programming Modes
 #+begin_src emacs-lisp
-(use-package company
-  :diminish company
-  :ensure t
-  :config
-  (add-hook 'after-init-hook 'global-company-mode))
+  (use-package company
+    :diminish company
+    :ensure t
+    :config
+    (add-hook 'after-init-hook 'global-company-mode))
 
-(use-package move-text)
+  (use-package move-text)
 
-(use-package multiple-cursors)
-(use-package command-log-mode)
+  (use-package multiple-cursors)
+  (use-package command-log-mode)
 
-(use-package lua-mode)
+  (use-package lua-mode)
 
-(use-package flycheck)
-(use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :hook (
-		 (c-mode . lsp)
-		 (lua-mode . lsp)
-		 (dockerfile-mode . lsp))
-  :commands lsp)
-(use-package dockerfile-mode)
+  (use-package flycheck)
+  (use-package lsp-mode
+    :init
+    (setq lsp-keymap-prefix "C-c l")
+    :hook (
+		   (c-mode . lsp)
+		   (lua-mode . lsp)
+		   (dockerfile-mode . lsp))
+    :commands lsp)
+  (use-package dockerfile-mode)
+
+  (use-package dap-mode
+    :after lsp-mode
+    :commands dap-debug
+    :hook ((c-mode . dap-ui-mode)
+		   (c-mode . dap-mode))
+    :config
+    (eval-when-compile
+      (require 'cl))
+    (require 'dap-lldb)
+    (require 'dap-gdb-lldb))
+
+  (dap-auto-configure-mode)
+  (dap-gdb-lldb-setup)
+
+  (setq gud-key-prefix (kbd "C-e"))
 
 #+end_src
 
@@ -176,6 +192,8 @@
 
 (exwm-config-default)
 (exwm-systemtray-enable)
+
+(setq my-term "alacritty")
 
 (setq exwm-input-prefix-keys
 	  '(?\C-x
@@ -410,7 +428,9 @@ Assume point is in the corresponding edit buffer."
 	(concat "/home/slamko/Pictures/" (read-string "Screenshot name: "))))
 
 (defun run-auto-start ()
-  (interactive))
+  (interactive)
+  (start-process-shell-command "pnmixer" nil "/bin/pnmixer")
+  (start-process-shell-command "nm-applet" nil "/bin/nm-applet"))
 
 (defun start-message ()
   (message "Welcome back to the Church, my child."))
@@ -463,6 +483,10 @@ Assume point is in the corresponding edit buffer."
 (defun goto-last-heading ()
   (interactive)
   (org-end-of-subtree))
+
+(defun run-term ()
+  (interactive)
+  (start-process-shell-command my-term nil (concat "/bin/" my-term)))
 
 #+end_src
 ** Packages setup functions
@@ -568,6 +592,25 @@ Assume point is in the corresponding edit buffer."
 	  (swiper-isearch (funcall region-extract-function nil))
 	  (swiper-isearch)))
 
+(defun buffer-binary-p (&optional buffer)
+  "Return whether BUFFER or the current buffer is binary.
+
+A binary buffer is defined as containing at least on null byte.
+
+Returns either nil, or the position of the first null byte."
+  (with-current-buffer (or buffer (current-buffer))
+    (save-excursion
+      (goto-char (point-min))
+      (search-forward (string ?\x00) nil t 1))))
+
+(defun hexl-if-binary ()
+  "If `hexl-mode' is not already active, and the current buffer
+is binary, activate `hexl-mode'."
+  (interactive)
+  (unless (eq major-mode 'hexl-mode)
+    (when (buffer-binary-p)
+      (hexl-mode))))
+
 #+end_src
 * Keybindings
 ** Init
@@ -608,12 +651,14 @@ Assume point is in the corresponding edit buffer."
 #+begin_src emacs-lisp
 (exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
 (exwm-input-set-key (kbd "s-c") 'kill-current-buffer)
+(exwm-input-set-key (kbd "s-q") 'kill-emacs)
 (exwm-input-set-key (kbd "s-p") 'bon-app-launcher)
 (exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
 (exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
-(exwm-input-set-key (kbd "s-<return>") 'vterm)
+(exwm-input-set-key (kbd "s-<return>") 'run-term)
 (exwm-input-set-key (kbd "s-m") 'exwm-workspace-move)
 (exwm-input-set-key (kbd "s-`")
+					
 					(lambda ()
 					  (interactive)
 					  (exwm-workspace-switch-create 0)))
@@ -760,7 +805,7 @@ Assume point is in the corresponding edit buffer."
 (add-hook 'sh-mode-hook #'my-sh-hook)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (add-hook 'org-mode-hook 'display-line-numbers-mode)
-;;(add-hook 'org-mode-hook 'org-mode-bindings)
+(add-hook 'find-file-hooks 'hexl-if-binary)
 #+end_src
 * Eshell
 ** Eshell Prompt
