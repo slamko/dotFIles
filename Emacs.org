@@ -65,12 +65,13 @@
 ** EXWM
 #+begin_src emacs-lisp
 
-  (use-package exwm
-	:ensure t)
+(use-package exwm
+  :ensure t)
 
-  (require 'exwm-config)
-  (require 'exwm-systemtray)
-  (require 'cl-lib)
+(require 'exwm-config)
+(require 'exwm-systemtray)
+(require 'cl-lib)
+(use-package multi-term)
 
 #+end_src
 
@@ -202,6 +203,7 @@
 		
 (setq global-exwm-mode-var 3)
 (setq global-exwm-workspace-num 5)
+(setq eshell-bufs-counter 0)
 (display-battery-mode)
 #+end_src
 
@@ -488,6 +490,15 @@ Assume point is in the corresponding edit buffer."
   (interactive)
   (start-process-shell-command my-term nil (concat "/bin/" my-term)))
 
+(defun eshell-new-rec (cnt)
+  (if (get-buffer (concat "*eshell*<" (number-to-string cnt) ">"))
+	  (eshell-new-rec (+ cnt 1))
+	  (eshell cnt)))
+
+(defun eshell-new (&optional cnt)
+  (interactive)
+  (eshell-new-rec (or cnt 1)))
+
 #+end_src
 ** Packages setup functions
 #+begin_src emacs-lisp
@@ -632,19 +643,19 @@ is binary, activate `hexl-mode'."
 #+end_src
 ** Base Emacs Bindings
 #+begin_src emacs-lisp
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (global-set-key (kbd "M-<tab>") 'switch-to-next-file-buffer)
-  (global-set-key (kbd "M-<backspace>") 'switch-to-last-buffer)
-  (global-set-key (kbd "C-x w q") 'delete-window)
-  (global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
-  (global-set-key (kbd "C-S-<return>") 'eshell)
-  (global-set-key (kbd "C-<tab>") 'other-window)
-  (global-set-key (kbd "<f4>") 'switch-keyboard-layout)
-  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-  (global-set-key (kbd "C-s") 'save-buffer)
-  (global-set-key (kbd "C-f") 'swiper-isearch-selected)
-  (global-set-key (kbd "<print>") 'take-screenshot)
-  (global-set-key (kbd "M-r") 'eval-region)
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+(global-set-key (kbd "M-<tab>") 'switch-to-next-file-buffer)
+(global-set-key (kbd "M-<backspace>") 'switch-to-last-buffer)
+(global-set-key (kbd "C-x w q") 'delete-window)
+(global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
+(global-set-key (kbd "C-S-<return>") 'eshell-new)
+(global-set-key (kbd "C-<tab>") 'other-window)
+(global-set-key (kbd "<f4>") 'switch-keyboard-layout)
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+(global-set-key (kbd "C-s") 'save-buffer)
+(global-set-key (kbd "C-f") 'swiper-isearch-selected)
+(global-set-key (kbd "<print>") 'take-screenshot)
+(global-set-key (kbd "M-r") 'eval-region)
 #+end_src
 
 ** EXWM
@@ -792,6 +803,7 @@ is binary, activate `hexl-mode'."
 #+begin_src emacs-lisp
 (add-hook 'exwm-init-hook 'start-message)
 (add-hook 'exwm-init-hook 'run-auto-start)
+;; (add-hook 'kill-buffer-hook 'decrement-eshell-cnt)
 #+end_src
 ** Lsp
 #+begin_src emacs-lisp
