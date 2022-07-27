@@ -195,6 +195,8 @@
     (require 'dap-lldb)
     (require 'dap-gdb-lldb))
 
+  (use-package elisp-def)
+
   (dap-auto-configure-mode)
   (dap-gdb-lldb-setup)
 
@@ -678,6 +680,13 @@ is binary, activate `hexl-mode'."
     (when (buffer-binary-p)
       (hexl-mode))))
 
+(defun goto-definition ()
+  (interactive)
+  (if lsp-mode
+	(lsp-find-declaration)
+	(elisp-def)))
+  
+
 #+end_src
 * Keybindings
 ** Init
@@ -805,7 +814,7 @@ is binary, activate `hexl-mode'."
 ** Packages Setup Bindings
 *** Lsp
 #+begin_src emacs-lisp
-(global-set-key (kbd "<f12>") 'lsp-find-declaration)
+(global-set-key (kbd "<f12>") 'goto-definition)
 #+end_src
 
 *** Multiple Cursors
@@ -875,6 +884,8 @@ is binary, activate `hexl-mode'."
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (add-hook 'org-mode-hook 'display-line-numbers-mode)
 (add-hook 'find-file-hooks 'hexl-if-binary)
+(dolist (hook '(emacs-lisp-mode-hook ielm-mode-hook))
+  (add-hook hook #'elisp-def-mode))
 #+end_src
 * Eshell
 ** Eshell Prompt
