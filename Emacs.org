@@ -7,10 +7,6 @@
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
                          ("org" . "https://orgmode.org/elpa/")
                          ("elpa" . "https://elpa.gnu.org/packages/")))
-
-(add-to-list 'load-path "~/echurch/bon-app-launcher")
-(add-to-list 'load-path "~/.emacs.d/multi-eshell")
-
 #+end_src
 ** Initialize Package 
 #+begin_src emacs-lisp
@@ -27,6 +23,21 @@
 #+begin_src emacs-lisp
 (require 'use-package)
 (setq use-package-always-ensure t)
+#+end_src
+** Install straight
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 #+end_src
 * Startup Configuration
 ** UI
@@ -64,7 +75,8 @@
 
 #+end_src
 * Packages Import
-** EXWM
+** Use-package
+*** EXWM
 #+begin_src emacs-lisp
 
 (use-package exwm
@@ -73,38 +85,37 @@
 (require 'exwm-config)
 (require 'exwm-systemtray)
 (require 'cl-lib)
-(require 'multi-eshell)
 #+end_src
 
-** MU4E
+*** MU4E
 #+begin_src emacs-lisp
-(use-package mu4e
-  :ensure nil
-  :load-path "/usr/share/emacs/site-lisp/mu4e/"
-  ;; :defer 20 ; Wait until 20 seconds after startup
-  :config
+;; (use-package mu4e
+  ;; :ensure nil
+  ;; :load-path "/usr/share/emacs/site-lisp/mu4e/"
+  ;;:defer 20 ; Wait until 20 seconds after startup
+  ;; :config
 
-  ;; This is set to 't' to avoid mail syncing issues when using mbsync
-  (setq mu4e-change-filenames-when-moving t)
+;;  This is set to 't' to avoid mail syncing issues when using mbsync
+  ;; (setq mu4e-change-filenames-when-moving t)
 
-  ;; Refresh mail using isync every 10 minutes
-  (setq mu4e-update-interval (* 10 60))
-  (setq mu4e-get-mail-command "mbsync -a")
-  (setq mu4e-maildir "~/Mail")
+;;  Refresh mail using isync every 10 minutes
+  ;; (setq mu4e-update-interval (* 10 60))
+  ;; (setq mu4e-get-mail-command "mbsync -a")
+  ;; (setq mu4e-maildir "~/Mail")
 
-  (setq mu4e-drafts-folder "/[Gmail]/Drafts")
-  (setq mu4e-sent-folder   "/[Gmail]/Sent Mail")
-  (setq mu4e-refile-folder "/[Gmail]/All Mail")
-  (setq mu4e-trash-folder  "/[Gmail]/Trash")
-  (setq mu4e-maildir-shortcuts
-    '((:maildir "/Inbox"    :key ?i)
-      (:maildir "/[Gmail]/Sent Mail" :key ?s)
-      (:maildir "/[Gmail]/Trash"     :key ?t)
-      (:maildir "/[Gmail]/Drafts"    :key ?d)
-      (:maildir "/[Gmail]/All Mail"  :key ?a))))
+  ;; (setq mu4e-drafts-folder "/[Gmail]/Drafts")
+  ;; (setq mu4e-sent-folder   "/[Gmail]/Sent Mail")
+  ;; (setq mu4e-refile-folder "/[Gmail]/All Mail")
+  ;; (setq mu4e-trash-folder  "/[Gmail]/Trash")
+  ;; (setq mu4e-maildir-shortcuts
+    ;; '((:maildir "/Inbox"    :key ?i)
+      ;; (:maildir "/[Gmail]/Sent Mail" :key ?s)
+      ;; (:maildir "/[Gmail]/Trash"     :key ?t)
+      ;; (:maildir "/[Gmail]/Drafts"    :key ?d)
+      ;; (:maildir "/[Gmail]/All Mail"  :key ?a))))
 
 #+end_src
-** UI
+*** UI
 #+begin_src emacs-lisp
   (use-package doom-themes)
   (use-package smooth-scrolling)
@@ -121,44 +132,48 @@
 
 #+end_src
 
-** Helper Packages
+*** Helper Packages
 #+begin_src emacs-lisp
 
-  (use-package ivy
-	:diminish ivy-mode
-	:bind ()
-	:config
-	(ivy-mode 1))
+(use-package ivy
+  :diminish ivy-mode
+  :bind ()
+  :config
+  (ivy-mode 1))
 
-  (use-package counsel)
-  (use-package magit)
-  (use-package neotree)
-  (use-package sh-script)
-  (use-package bash-completion)
-  (use-package vterm)
-  (use-package diredfl)
-  (use-package swiper
-	:ensure t
-	:custom
-	(setq swiper-include-line-number-in-search t))
+(use-package counsel)
+(use-package magit)
+(use-package neotree)
+(use-package sh-script)
+(use-package bash-completion)
+(use-package vterm)
+(use-package diredfl)
+(use-package swiper
+  :ensure t
+  :custom
+  (setq swiper-include-line-number-in-search t))
 
-  (use-package projectile
-	:diminish projectile-mode
-	:config (projectile-mode)
-	:custom (projectile-completion-system 'ivy)
-	:bind-keymap
-	("C-c p" . projectile-command-map))
+(use-package projectile
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :custom (projectile-completion-system 'ivy)
+  :bind-keymap
+  ("C-c p" . projectile-command-map))
 
-  (use-package counsel-projectile
-	:config (counsel-projectile-mode))
+(use-package counsel-projectile
+  :config (counsel-projectile-mode))
 
-  (use-package ivy-rich
-	:init
-	(ivy-rich-mode 1))
+(use-package ivy-rich
+  :init
+  (ivy-rich-mode 1))
 
+(use-package syntax-subword
+  :config
+  (setq syntax-subword-skip-spaces t)
+  (global-syntax-subword-mode))
 #+end_src
 
-** Programming Modes
+*** Programming Modes
 #+begin_src emacs-lisp
   (use-package company
     :diminish company
@@ -204,7 +219,7 @@
 
 #+end_src
 
-** Org Mode
+*** Org Mode
 #+begin_src emacs-lisp
 
 (use-package org)
@@ -215,8 +230,25 @@
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
 (require 'org-tempo)
+#+end_src
+** Straight
+#+begin_src emacs-lisp
+(use-package bon-app-launcher
+  :straight (bon-app-launcher :host github
+                    :repo "slamko/bon-app-launcher"))
 
-(require 'bon-app-launcher)
+(use-package eservice-manager
+  :straight (eservice-manager :host github
+                    :repo "slamko/eservice-manager"))
+
+(use-package hjkl
+  :straight (hjkl :host github
+                    :repo "sam217pa/emacs-hjkl"))
+
+(use-package emacs-multi-eshell
+  :straight (emacs-multi-eshell :host github
+                    :repo "slamko/emacs-multi-eshell"))
+
 #+end_src
 * Variables Setup
 ** EXWM
@@ -235,7 +267,6 @@
 (setq global-exwm-mode-var 3)
 (setq global-exwm-workspace-num 5)
 (setq eshell-bufs-counter 0)
-(setq multi-eshell-shell-function '(eshell))
 (display-battery-mode)
 #+end_src
 
@@ -355,12 +386,14 @@ Assume point is in the corresponding edit buffer."
 
 ** Emacs System
 #+begin_src emacs-lisp
-  (setq cur-keyboard-layout 1)
+(setq cur-keyboard-layout 1)
 
-  (setq backup-directory-alist `(("." . "~/.emacs.d/.backups")))
-  (setq delete-old-versions t
-	kept-new-versions 10
+(setq backup-directory-alist `(("." . "~/.emacs.d/.backups")))
+(setq delete-old-versions t
+	  kept-new-versions 10
 	kept-old-versions 5)
+
+(setq kill-buffer-query-functions (delq 'process-kill-buffer-query-function kill-buffer-query-functions))
   #+end_src
 * Macro Inserts
 ** Emacs Helper Macros
@@ -522,40 +555,12 @@ Assume point is in the corresponding edit buffer."
   (interactive)
   (start-process-shell-command my-term nil (concat "/bin/" my-term)))
 
-(setq eshell-last-id nil)
-
-(defun get-eshell-buf-name (num)
-  (concat "*eshell*<" (number-to-string num) ">"))
-
-(defun eshell-new-rec (cnt)
-  (if (get-buffer (get-eshell-buf-name cnt))
-	  (eshell-new-rec (+ cnt 1))
-	  (eshell (setq eshell-last-id cnt))))
-
-(defun eshell-new (&optional cnt)
-  (interactive)
-  (eshell-new-rec (or cnt 1)))
-
-(defun eshell-last-rec (id)
-  (if (and (get-buffer (get-eshell-buf-name id)) (not (equal eshell-last-id id)))
-	  (eshell-last-rec (+ id 1))
-	  (eshell (setq eshell-last-id id))))
-
-(defun eshell-last (&optional id)
-  (interactive)
-  (let*
-	  ((eshell-id (or id eshell-last-id))
-	   (eshell-buf (get-buffer (get-eshell-buf-name eshell-id))))
-	(message (buffer-name  eshell-buf))
-    (if eshell-buf
-	  (switch-to-buffer eshell-buf)
-	  (eshell-last-rec 1))))
-
 (defun run-auto-start ()
   (interactive)
-  (start-process-shell-command "ibus" nil "/bin/ibus-daemon")
-  (start-process-shell-command "pnmixer" nil "/bin/pnmixer")
-  (start-process-shell-command "nm-applet" nil "/bin/nm-applet"))
+  (when (memq 'exwm-manage--add-frame after-make-frame-functions)
+	(esm/start-process-once "ibus" "/bin/ibus-daemon")
+	(esm/start-process-once "pnmixer" "/bin/pnmixer")
+	(esm/start-process-once "nm-applet" "/bin/nm-applet")))
 
 #+end_src
 ** Packages setup functions
@@ -685,7 +690,6 @@ is binary, activate `hexl-mode'."
   (if lsp-mode
 	(lsp-find-declaration)
 	(elisp-def)))
-  
 
 #+end_src
 * Keybindings
@@ -713,8 +717,8 @@ is binary, activate `hexl-mode'."
 (global-set-key (kbd "M-<backspace>") 'switch-to-last-buffer)
 (global-set-key (kbd "C-x w q") 'delete-window)
 (global-set-key (kbd "C-x w k") 'kill-buffer-and-window)
-(global-set-key (kbd "C-S-<return>") 'multi-eshell)
-(global-set-key (kbd "C-<iso-lefttab>") 'multi-eshell-switch)
+(global-set-key (kbd "C-S-<return>") 'ees/eshell-new)
+(global-set-key (kbd "C-<iso-lefttab>") 'ees/eshell-last)
 (global-set-key (kbd "C-<tab>") 'other-window)
 (global-set-key (kbd "<f4>") 'switch-keyboard-layout)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -800,16 +804,21 @@ is binary, activate `hexl-mode'."
 #+end_src
 *** Text Navigation
 #+begin_src emacs-lisp
-  (global-set-key (kbd "C-h") 'left-char)
-  (global-set-key (kbd "C-j") 'next-line)
-  (global-set-key (kbd "C-k") 'previous-line)
-  (global-set-key (kbd "C-l") 'right-char)
-  (global-set-key (kbd "C-n") 'forward-char)
-  (global-set-key (kbd "M-n") 'forward-word)
-  (global-set-key (kbd "C-{") 'beginning-of-buffer)
-  (global-set-key (kbd "C-}") 'end-of-buffer)
-  (global-set-key (kbd "C-:") 'goto-line)
-  (global-set-key (kbd "C-x C-x") 'lscr--jump)
+(global-set-key (kbd "C-h") 'left-char)
+(global-set-key (kbd "C-j") 'next-line)
+(global-set-key (kbd "C-k") 'previous-line)
+(global-set-key (kbd "C-l") 'right-char)
+(global-set-key (kbd "M-h") 'left-word)
+(global-set-key (kbd "C-M-k") 'backward-paragraph)
+(global-set-key (kbd "C-M-j") 'forward-paragraph)
+(global-set-key (kbd "M-j") 'move-text-down)
+(global-set-key (kbd "M-k") 'move-text-up)
+(global-set-key (kbd "C-n") 'forward-char)
+(global-set-key (kbd "M-n") 'forward-word)
+(global-set-key (kbd "C-{") 'beginning-of-buffer)
+(global-set-key (kbd "C-}") 'end-of-buffer)
+(global-set-key (kbd "C-:") 'goto-line)
+(global-set-key (kbd "C-x C-x") 'lscr--jump)
 #+end_src
 ** Packages Setup Bindings
 *** Lsp
@@ -868,8 +877,7 @@ is binary, activate `hexl-mode'."
 ** EXWM
 #+begin_src emacs-lisp
 (add-hook 'exwm-init-hook 'start-message)
-(run-with-timer 25 nil 'run-auto-start)
-;; (add-hook 'kill-buffer-hook 'decrement-eshell-cnt)
+(run-with-timer 20 nil 'run-auto-start)
 #+end_src
 ** Lsp
 #+begin_src emacs-lisp
@@ -956,9 +964,15 @@ PWD is not in a git repo (or the git command is not found)."
 
 (setq eshell-prompt-function 'eshell-prompt)
 #+end_src
-** Aliases
+** Elisp Aliases
 #+begin_src emacs-lisp
 (defalias 'emacs 'find-file)
 (defun eshell/emacs (file)
     (find-file file))
+#+end_src
+** Shell Aliases
+#+begin_src emacs-lisp :tangle "~/.emacs.d/eshell/alias"
+alias sleep loginctl suspend
+alias down loginctl poweroff
+alias reboot loginctl reboot
 #+end_src
