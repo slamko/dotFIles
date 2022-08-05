@@ -199,24 +199,24 @@
     :commands lsp)
   (use-package dockerfile-mode)
   
-  (use-package dap-mode
-    :after lsp-mode
-    :commands dap-debug
-    :hook ((c-mode . dap-ui-mode)
-		   (c-mode . dap-mode))
-    :config
-    (eval-when-compile
-      (require 'cl))
-    (require 'dap-lldb)
-    (require 'dap-gdb-lldb))
+  ;; (use-package dap-mode
+    ;; :after lsp-mode
+    ;; :commands dap-debug
+    ;; :hook ((c-mode . dap-ui-mode)
+
+;; (c-mode . dap-mode))
+    ;; :config
+    ;; (eval-when-compile
+      ;; (require 'cl))
+    ;; (require 'dap-lldb)
+    ;; (require 'dap-gdb-lldb))
+
+  ;; (dap-auto-configure-mode)
+  ;; (dap-gdb-lldb-setup)
 
   (use-package elisp-def)
 
-  (dap-auto-configure-mode)
-  (dap-gdb-lldb-setup)
-
   (setq gud-key-prefix (kbd "C-e"))
-
 #+end_src
 
 *** Org Mode
@@ -240,10 +240,6 @@
 (use-package eservice-manager
   :straight (eservice-manager :host github
                     :repo "slamko/eservice-manager"))
-
-(use-package hjkl
-  :straight (hjkl :host github
-                    :repo "sam217pa/emacs-hjkl"))
 
 (use-package emacs-multi-eshell
   :straight (emacs-multi-eshell :host github
@@ -351,8 +347,6 @@ Assume point is in the corresponding edit buffer."
 #+end_src
 ** UI
 #+begin_src emacs-lisp
-
-(setq-default tab-width 2)
 (setq redisplay-dont-pause t
 	  scroll-margin 1
 	  scroll-step 1
@@ -366,7 +360,7 @@ Assume point is in the corresponding edit buffer."
 
 (setq-default swiper-include-line-number-in-search t)
 (diredfl-global-mode)
-(setq-default tab-width 4)
+
 (setq column-number-mode t)
 
 (electric-pair-mode 1)
@@ -387,6 +381,10 @@ Assume point is in the corresponding edit buffer."
 ** Emacs System
 #+begin_src emacs-lisp
 (setq cur-keyboard-layout 1)
+
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+(setq indent-line-function 'insert-tab)
 
 (setq backup-directory-alist `(("." . "~/.emacs.d/.backups")))
 (setq delete-old-versions t
@@ -732,7 +730,6 @@ is binary, activate `hexl-mode'."
 #+begin_src emacs-lisp
 (exwm-input-set-key (kbd "s-<tab>") 'fhd/exwm-input-toggle-mode)
 (exwm-input-set-key (kbd "s-c") 'kill-current-buffer)
-(exwm-input-set-key (kbd "s-q") 'kill-emacs)
 (exwm-input-set-key (kbd "s-p") 'bon-app-launcher-usr-bin)
 (exwm-input-set-key (kbd "s-<right>") 'move-to-right-workspace)
 (exwm-input-set-key (kbd "s-<left>") 'move-to-left-workspace)
@@ -891,6 +888,7 @@ is binary, activate `hexl-mode'."
 (add-hook 'sh-mode-hook #'my-sh-hook)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (add-hook 'org-mode-hook 'display-line-numbers-mode)
+(add-hook 'org-mode-hook (lambda () (electric-pair-local-mode 0)))
 (add-hook 'find-file-hooks 'hexl-if-binary)
 (dolist (hook '(emacs-lisp-mode-hook ielm-mode-hook))
   (add-hook hook #'elisp-def-mode))
