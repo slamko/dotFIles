@@ -78,7 +78,7 @@
 ** Use-package
 *** EXWM
 #+begin_src emacs-lisp
-
+(require 'xcb)
 (use-package exwm
   :ensure t)
 
@@ -461,6 +461,7 @@ Assume point is in the corresponding edit buffer."
 
 (defun save-buffer-not-scratch ()
   (interactive)
+  (evil-force-normal-state)
   (when (not (equal (buffer-name (current-buffer)) "*scratch*"))
 	(save-buffer)))
 
@@ -719,6 +720,38 @@ is binary, activate `hexl-mode'."
   (if lsp-mode
 	(lsp-find-declaration)
 	(elisp-def)))
+
+#+end_src
+** Power State Management
+#+begin_src emacs-lisp
+
+(require 'f)
+
+(defvar pre-suspend-hook nil)
+
+(defvar post-suspend-hook nil)
+
+(defun write-state (state)
+  (interactive)
+  (run-hooks 'pre-suspend-hook)
+  (f-write state 'utf-8 "/sudo::/sys/power/state")
+  (run-hooks 'post-suspend-hook))
+
+(defun sleep ()
+  (interactive)
+  (write-state "mem"))
+
+(defun hibernation ()
+  (interactive)
+  (write-state "disk"))
+
+(defun idle ()
+  (interactive)
+  (write-state "freeze"))
+
+(defun shutdown ()
+  (interactive)
+  (start-process-shell-command "shutdown" nil "sudo shutdown -h now"))
 
 #+end_src
 * Keybindings
