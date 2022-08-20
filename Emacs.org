@@ -517,9 +517,23 @@ Assume point is in the corresponding edit buffer."
   (dired-find-file)
   (setq dired-kill-when-opening-new-dired-buffer t))
 
+(defvar econfig-dir "~/.emacs.d")
+(defvar econfig-name "~/.emacs.d/Emacs.org")
+
 (defun open-config ()
   (interactive)
-  (find-file "~/.emacs.d/Emacs.org"))
+  (find-file econfig-name))
+
+(defun sync-config ()
+  (interactive)
+  (progn
+    (when (not (directory-name-p econfig-dir)) (make econfig-dir))
+    (when (file-exists-p econfig-name) (delete-file econfig-name))
+    (escript-one-out
+     `(wget
+       "https://raw.githubusercontent.com/slamko/orgFiles/main/Emacs.org"
+       -O ,econfig-name))
+    (org-babel-tangle-file econfig-name))
 
 (defun er-sudo-edit (&optional arg)
   "Edit currently visited file as root.
