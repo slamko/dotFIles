@@ -64,7 +64,7 @@
  '(custom-safe-themes
    '("a0415d8fc6aeec455376f0cbcc1bee5f8c408295d1c2b9a1336db6947b89dd98" "1d5e33500bc9548f800f9e248b57d1b2a9ecde79cb40c0b1398dec51ee820daf" default))
  '(package-selected-packages
-   '(org-bullets command-log-mode counsel-projectile projectile ivy-rich screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode vterm bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
+   '(org-bullets command-log-mode counsel-projectile projectile ivy-rich screenshot lsp-ui rainbow-delimiters all-the-icons exwm multiple-cursors rainbo-identifiers-mode color-identifiers-mode modus-themes preproc-font-lock move-text doom-modeline dap-mode lsp-mode bash-completion doom-themes neotree magit company smooth-scrolling counsel ivy use-package))
  '(warning-suppress-types '((comp) (comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -117,18 +117,18 @@
 #+end_src
 *** UI
 #+begin_src emacs-lisp
-  (use-package doom-themes)
-  (use-package smooth-scrolling)
-  (use-package rainbow-delimiters)
-  (use-package color-identifiers-mode)
-  (use-package all-the-icons
-	:ensure t)
+(use-package doom-themes)
+(use-package smooth-scrolling)
+(use-package rainbow-delimiters)
+(use-package color-identifiers-mode)
+(use-package all-the-icons
+  :ensure t)
 
-  (use-package doom-modeline
-	:ensure t
-	:init (doom-modeline-mode 1))
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
 
-  (use-package preproc-font-lock)
+(use-package preproc-font-lock)
 
 #+end_src
 
@@ -141,14 +141,18 @@
   :config
   (ivy-mode 1))
 
-(use-package counsel)
-(use-package magit)
-(use-package neotree)
+(use-package counsel
+  :after ivy)
+(use-package magit
+  :commands magit-status)
+
+(use-package neotree
+  :commands neotree)
 (use-package sh-script)
 (use-package bash-completion)
-(use-package vterm)
 (use-package diredfl)
 (use-package swiper
+  :commands (swiper-isearch swiper-isearch-selected)
   :ensure t
   :custom
   (setq swiper-include-line-number-in-search t))
@@ -161,9 +165,11 @@
   ("C-c p" . projectile-command-map))
 
 (use-package counsel-projectile
-  :config (counsel-projectile-mode))
+  :config (counsel-projectile-mode)
+  :after projectile)
 
 (use-package ivy-rich
+  :after ivy
   :init
   (ivy-rich-mode 1))
 
@@ -175,31 +181,36 @@
 
 *** Programming Modes
 #+begin_src emacs-lisp
-  (use-package company
-    :diminish company
-    :ensure t
-    :config
-    (add-hook 'after-init-hook 'global-company-mode))
+(use-package company
+  :diminish company
+  :ensure t
+  :config
+  (add-hook 'after-init-hook 'global-company-mode))
 
-  (use-package move-text)
+(use-package move-text)
 
-  (use-package multiple-cursors)
-  (use-package command-log-mode)
+(use-package multiple-cursors
+  :defer 0)
+(use-package command-log-mode
+  :commands (command-log-mode global-command-log-mode))
 
-  (use-package lua-mode)
+(use-package lua-mode)
 
-  (use-package flycheck)
-  (use-package lsp-mode
-    :init
-    (setq lsp-keymap-prefix "C-c l")
-    :hook (
-		   (c-mode . lsp)
-		   (lua-mode . lsp)
-		   (dockerfile-mode . lsp))
-    :commands lsp)
-  (use-package dockerfile-mode)
-  (use-package meson-mode)
-  ;; (use-package dap-mode
+(use-package flycheck
+  :after lsp-mode)
+
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :hook (
+		 (c-mode . lsp)
+		 (lua-mode . lsp)
+		 (dockerfile-mode . lsp))
+  :commands lsp)
+(use-package dockerfile-mode)
+(use-package meson-mode)
+
+;; (use-package dap-mode
     ;; :after lsp-mode
     ;; :commands dap-debug
     ;; :hook ((c-mode . dap-ui-mode)
@@ -214,7 +225,7 @@
   ;; (dap-auto-configure-mode)
   ;; (dap-gdb-lldb-setup)
 
-  (use-package elisp-def)
+(use-package elisp-def)
 
 #+end_src
 
@@ -226,23 +237,24 @@
   (setq evil-want-C-d-scroll t)
   (evil-mode 1))
 
-(use-package evil-paredit)
 #+end_src
 *** Org Mode
 #+begin_src emacs-lisp
 
-(use-package org)
+(use-package org
+  :defer 0
+  :commands open-config)
 
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode)
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
-(require 'org-tempo)
 #+end_src
 ** Straight
 #+begin_src emacs-lisp
 (use-package bon-app-launcher
+  :commands (bon-app-launcher bon-app-launcher-usr-bin)
   :straight (bon-app-launcher :host github
                     :repo "slamko/bon-app-launcher"))
 
@@ -251,9 +263,15 @@
                     :repo "slamko/eservice-manager"))
 
 (use-package emacs-multi-eshell
+  :commands (ees/eshell-new ees/eshell-last)
   :straight (emacs-multi-eshell :host github
                     :repo "slamko/emacs-multi-eshell"))
 
+(use-package escript
+  :straight (escript :host github
+                    :repo "slamko/escript"))
+
+#+end_src
 #+end_src
 * Variables Setup
 ** EXWM
@@ -272,7 +290,6 @@
 (setq global-exwm-mode-var 3)
 (setq global-exwm-workspace-num 5)
 (setq eshell-bufs-counter 0)
-(display-battery-mode)
 #+end_src
 
 ** Org Mode
@@ -291,18 +308,19 @@
 		  org-capture-bookmark nil)
 
 
-
+(with-eval-after-load "org"
   (org-babel-do-load-languages
 	'org-babel-load-languages
-	'((emacs-lisp . t)))
+	'((emacs-lisp . t))))
 
-
+(with-eval-after-load "org"
+  (require 'org-tempo)
   (add-to-list 'org-structure-template-alist '("sh" . "src sh"))
   (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
   (add-to-list 'org-structure-template-alist '("li" . "src lisp"))
   (add-to-list 'org-structure-template-alist '("py" . "src python"))
   (add-to-list 'org-structure-template-alist '("yaml" . "src yaml"))
-  (add-to-list 'org-structure-template-alist '("json" . "src json"))
+  (add-to-list 'org-structure-template-alist '("json" . "src json")))
 
 (with-eval-after-load "org"
   (when (version-list-= (version-to-list org-version) '(9 4 3))
@@ -372,7 +390,6 @@ Assume point is in the corresponding edit buffer."
 
 (setq column-number-mode t)
 
-(electric-pair-mode 1)
 (delete-selection-mode)
 
 (setq-default color-identifiers-mode 1)
@@ -384,7 +401,6 @@ Assume point is in the corresponding edit buffer."
 (load-theme 'doom-palenight t)
 (setq display-time-default-load-average nil)
 (display-time)
-
 #+end_src
 
 ** Emacs System
@@ -431,6 +447,20 @@ Assume point is in the corresponding edit buffer."
 * Function definitions
 ** Emacs Setup Functions
 #+begin_src emacs-lisp
+
+(defvar econfig-dir "~/.emacs.d")
+(defvar econfig-name "~/.emacs.d/Emacs.org")
+
+(defun sync-config ()
+  (interactive)
+  (progn
+    (when (not (directory-name-p econfig-dir)) (make econfig-dir))
+    (when (file-exists-p econfig-name) (delete-file econfig-name))
+    (escript-one-out
+     `(wget
+       "https://raw.githubusercontent.com/slamko/orgFiles/main/Emacs.org"
+       -O ,econfig-name))
+    (org-babel-tangle-file econfig-name)))
 
 (defun set-no-process-query-on-exit ()
     (let ((proc (get-buffer-process (current-buffer))))
@@ -517,23 +547,9 @@ Assume point is in the corresponding edit buffer."
   (dired-find-file)
   (setq dired-kill-when-opening-new-dired-buffer t))
 
-(defvar econfig-dir "~/.emacs.d")
-(defvar econfig-name "~/.emacs.d/Emacs.org")
-
 (defun open-config ()
   (interactive)
-  (find-file econfig-name))
-
-(defun sync-config ()
-  (interactive)
-  (progn
-    (when (not (directory-name-p econfig-dir)) (make econfig-dir))
-    (when (file-exists-p econfig-name) (delete-file econfig-name))
-    (escript-one-out
-     `(wget
-       "https://raw.githubusercontent.com/slamko/orgFiles/main/Emacs.org"
-       -O ,econfig-name))
-    (org-babel-tangle-file econfig-name))
+  (find-file "~/.emacs.d/Emacs.org"))
 
 (defun er-sudo-edit (&optional arg)
   "Edit currently visited file as root.
@@ -731,7 +747,7 @@ is binary, activate `hexl-mode'."
 
 (defun goto-definition ()
   (interactive)
-  (if lsp-mode
+  (if (boundp 'lsp-mode) 
 	(lsp-find-declaration)
 	(elisp-def)))
 
@@ -745,11 +761,26 @@ is binary, activate `hexl-mode'."
 
 (defvar post-suspend-hook nil)
 
+(defun check-battery ()
+  (if (string=
+       (substring
+        (pipe-str
+         '(acpi)
+         '(awk "'{print $3}'")) 0 1) "D")
+      (progn
+        (display-battery-mode)
+        (add-hook 'post-suspend-hook 'run-battery-check))))
+
+(defun run-battery-check ()
+  (run-with-timer 60 nil 'check-battery))
+
 (defun write-state (state)
   (interactive)
   (run-hooks 'pre-suspend-hook)
   (f-write state 'utf-8 "/sudo::/sys/power/state")
   (run-hooks 'post-suspend-hook))
+
+(add-hook 'post-suspend-hook 'check-battery)
 
 (defun sleep ()
   (interactive)
@@ -765,7 +796,9 @@ is binary, activate `hexl-mode'."
 
 (defun shutdown ()
   (interactive)
-  (start-process-shell-command "shutdown" nil "sudo shutdown -h now"))
+  (pipe-out
+   (read-passwd "Password: ")
+   '(sudo -S shutdown "-h" now)))
 
 #+end_src
 * Keybindings
@@ -955,11 +988,9 @@ is binary, activate `hexl-mode'."
 #+begin_src emacs-lisp
 (add-hook 'org-mode-hook 'display-line-numbers-mode)
 (add-hook 'org-mode-hook (lambda () (define-key mode-specific-map (kbd "f") 'counsel-org-goto-all)))
-(add-hook 'org-mode-hook (lambda () (electric-pair-local-mode 0)))
 #+end_src
 ** Editing Modes Hooks
 #+begin_src emacs-lisp
-(add-hook 'emacs-lisp-mode-hook 'paredit-mode)
 (add-hook 'emacs-lisp-mode-hook 'eldoc-mode)
 (add-hook 'lisp-interaction-mode-hook 'eldoc-mode)
 (add-hook 'ielm-mode-hook 'eldoc-mode)
@@ -1047,6 +1078,9 @@ PWD is not in a git repo (or the git command is not found)."
 #+end_src
 ** Shell Aliases
 #+begin_src emacs-lisp :tangle "~/.emacs.d/eshell/alias"
+(if (not (file-directory-p "~/.emacs.d/eshell"))
+    (make-directory "~/.emacs.d/eshell"))
+
 alias sleep loginctl suspend
 alias down loginctl poweroff
 alias reboot loginctl reboot
