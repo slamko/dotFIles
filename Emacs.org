@@ -88,114 +88,6 @@
 ;; (require 'cl-lib)
 #+end_src
 
-*** MU4E
-#+begin_src emacs-lisp
-;; (use-package mu4e
-  ;; :ensure nil
-  ;; :load-path "/usr/share/emacs/site-lisp/mu4e/"
-  ;;:defer 20 ; Wait until 20 seconds after startup
-  ;; :config
-
-;;  This is set to 't' to avoid mail syncing issues when using mbsync
-  ;; (setq mu4e-change-filenames-when-moving t)
-
-;;  Refresh mail using isync every 10 minutes
-  ;; (setq mu4e-update-interval (* 10 60))
-  ;; (setq mu4e-get-mail-command "mbsync -a")
-  ;; (setq mu4e-maildir "~/Mail")
-
-  ;; (setq mu4e-drafts-folder "/[Gmail]/Drafts")
-  ;; (setq mu4e-sent-folder   "/[Gmail]/Sent Mail")
-  ;; (setq mu4e-refile-folder "/[Gmail]/All Mail")
-  ;; (setq mu4e-trash-folder  "/[Gmail]/Trash")
-  ;; (setq mu4e-maildir-shortcuts
-    ;; '((:maildir "/Inbox"    :key ?i)
-      ;; (:maildir "/[Gmail]/Sent Mail" :key ?s)
-      ;; (:maildir "/[Gmail]/Trash"     :key ?t)
-      ;; (:maildir "/[Gmail]/Drafts"    :key ?d)
-      ;; (:maildir "/[Gmail]/All Mail"  :key ?a))))
-
-#+end_src
-*** UI
-#+begin_src emacs-lisp
-(use-package doom-themes)
-(use-package smooth-scrolling)
-(use-package rainbow-delimiters)
-(use-package color-identifiers-mode)
-(use-package all-the-icons
-  :ensure t)
-
-(use-package openwith
- :ensure t)
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1))
-
-(use-package preproc-font-lock)
-
-#+end_src
-
-*** Helper Packages
-#+begin_src emacs-lisp
-
-(use-package ivy
-  :diminish ivy-mode
-  :bind ()
-  :config
-  (ivy-mode 1))
-
-(use-package fzf
-  :bind ("C-x C-/" . fzf-find-file-in-dir)
-  :config
-  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll"
-        fzf/executable "fzf"
-        fzf/git-grep-args "-i --line-number %s"
-        ;; command used for `fzf-grep-*` functions
-        ;; example usage for ripgrep:
-        ;; fzf/grep-command "rg --no-heading -nH"
-        fzf/grep-command "grep -nrH"
-        ;; If nil, the fzf buffer will appear at the top of the window
-        fzf/position-bottom t
-        fzf/window-height 15))
-
-(use-package counsel
-  :after ivy)
-(use-package magit
-  :commands magit-status)
-
-(use-package neotree
-  :commands neotree)
-(use-package sh-script)
-(use-package bash-completion)
-(use-package diredfl)
-(use-package swiper
-  :commands (swiper-isearch swiper-isearch-selected)
-  :ensure t
-  :custom
-  (setq swiper-include-line-number-in-search t))
-
-(use-package projectile
-  :diminish projectile-mode
-  :config (projectile-mode)
-  :custom (projectile-completion-system 'ivy)
-  :bind-keymap
-  ("C-c p" . projectile-command-map))
-
-(use-package counsel-projectile
-  :config (counsel-projectile-mode)
-  :after projectile)
-
-(use-package ivy-rich
-  :after ivy
-  :init
-  (ivy-rich-mode 1))
-
-(use-package syntax-subword
-  :config
-  (setq syntax-subword-skip-spaces t)
-  (global-syntax-subword-mode))
-#+end_src
-
 *** Programming Modes
 #+begin_src emacs-lisp
 (use-package company
@@ -227,14 +119,18 @@
          (c++-mode . lsp)
 		 (lua-mode . lsp)
 		 (dockerfile-mode . lsp))
+  :commands lsp)
 
 (setq lsp-log-io nil)
 (setq read-process-output-max (* 1024 1024 10))
 (setq gc-cons-threshold 100000000)
 
-  :commands lsp)
 (use-package dockerfile-mode)
 (use-package meson-mode)
+(use-package nasm-mode)
+
+ (add-hook 'nasm-mode-hook
+            (lambda () (electric-indent-local-mode -1)))
 
 ;; Major mode for OCaml programming
 (use-package tuareg
@@ -296,6 +192,117 @@
 
 #+end_src
 
+*** MU4E
+#+begin_src emacs-lisp
+;; (use-package mu4e
+  ;; :ensure nil
+  ;; :load-path "/usr/share/emacs/site-lisp/mu4e/"
+  ;;:defer 20 ; Wait until 20 seconds after startup
+  ;; :config
+
+;;  This is set to 't' to avoid mail syncing issues when using mbsync
+  ;; (setq mu4e-change-filenames-when-moving t)
+
+;;  Refresh mail using isync every 10 minutes
+  ;; (setq mu4e-update-interval (* 10 60))
+  ;; (setq mu4e-get-mail-command "mbsync -a")
+  ;; (setq mu4e-maildir "~/Mail")
+
+  ;; (setq mu4e-drafts-folder "/[Gmail]/Drafts")
+  ;; (setq mu4e-sent-folder   "/[Gmail]/Sent Mail")
+  ;; (setq mu4e-refile-folder "/[Gmail]/All Mail")
+  ;; (setq mu4e-trash-folder  "/[Gmail]/Trash")
+  ;; (setq mu4e-maildir-shortcuts
+    ;; '((:maildir "/Inbox"    :key ?i)
+      ;; (:maildir "/[Gmail]/Sent Mail" :key ?s)
+      ;; (:maildir "/[Gmail]/Trash"     :key ?t)
+      ;; (:maildir "/[Gmail]/Drafts"    :key ?d)
+      ;; (:maildir "/[Gmail]/All Mail"  :key ?a))))
+
+#+end_src
+*** UI
+#+begin_src emacs-lisp
+(use-package doom-themes)
+(use-package smooth-scrolling)
+(use-package rainbow-delimiters)
+(use-package color-identifiers-mode)
+(use-package all-the-icons
+  :ensure t)
+
+(use-package openwith
+ :ensure t)
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
+
+(use-package preproc-font-lock)
+
+#+end_src
+
+*** Helper Packages
+#+begin_src emacs-lisp
+
+(use-package ivy
+  :diminish ivy-mode
+  :bind ()
+  :config
+  (ivy-mode 1))
+
+;; (use-package imenu-list)
+;; (imenu-list-minor-mode)
+
+(use-package fzf
+  :bind ("C-x C-/" . fzf-find-file-in-dir)
+  :config
+  (setq fzf/args "-x --color bw --print-query --margin=1,0 --no-hscroll"
+        fzf/executable "fzf"
+        fzf/git-grep-args "-i --line-number %s"
+        ;; command used for `fzf-grep-*` functions
+        ;; example usage for ripgrep:
+        ;; fzf/grep-command "rg --no-heading -nH"
+        fzf/grep-command "grep -nrH"
+        ;; If nil, the fzf buffer will appear at the top of the window
+        fzf/position-bottom t
+        fzf/window-height 15))
+
+(use-package counsel
+  :after ivy)
+(use-package magit
+  :commands magit-status)
+
+(use-package neotree
+  :commands neotree)
+(use-package sh-script)
+(use-package bash-completion)
+(use-package diredfl)
+(use-package swiper
+  :commands (swiper-isearch swiper-isearch-selected)
+  :ensure t
+  :custom
+  (setq swiper-include-line-number-in-search t))
+
+(use-package projectile
+  :diminish projectile-mode
+  :config (projectile-mode)
+  :custom (projectile-completion-system 'ivy)
+  :bind-keymap
+  ("C-c p" . projectile-command-map))
+
+(use-package counsel-projectile
+  :config (counsel-projectile-mode)
+  :after projectile)
+
+(use-package ivy-rich
+  :after ivy
+  :init
+  (ivy-rich-mode 1))
+
+(use-package syntax-subword
+  :config
+  (setq syntax-subword-skip-spaces t)
+  (global-syntax-subword-mode))
+#+end_src
+
 *** Evil
 #+begin_src emacs-lisp
  
@@ -313,7 +320,6 @@
   :ensure t
   :config
   (evil-collection-init))
-
 
 (use-package undo-tree
   :ensure t
@@ -515,7 +521,11 @@ Assume point is in the corresponding edit buffer."
 (setq openwith-associations
       (list
        (list (openwith-make-extension-regexp
-                    '("doc" "docx" "pdf" "xls" "ppt" "odt" "ods" "odg" "odp"))
+                    '("pdf" "djvu"))
+                   "zathura"
+                   '(file))
+       (list (openwith-make-extension-regexp
+                    '("doc" "docx" "xls" "ppt" "odt" "ods" "odg" "odp"))
                    "libreoffice"
                    '(file))
        (list (openwith-make-extension-regexp
@@ -664,10 +674,13 @@ With a prefix ARG prompt for a file to visit.
 Will also prompt for a file to visit if current
 buffer is not visiting a file."
   (interactive "P")
-  (if (or arg (not buffer-file-name))
-      (find-file (concat "/sudo:root@localhost:"
-                         (ido-read-file-name "Find file(as root): ")))
-    (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
+  (progn
+    (if (buffer-file-name) (find-file buffer-file-name))
+    (if (or arg (not buffer-file-name))
+        (find-file (concat "/sudo:root@localhost:"
+                           (ido-read-file-name "Find file(as root): ")))
+      (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name)))))
+
 #+end_src
 ** EXWM
 #+begin_src
@@ -763,6 +776,12 @@ buffer is not visiting a file."
 (defun dublicate-line ()
   (interactive)
   (dup-line))
+
+(defun uncaps-lock ()
+    (interactive)
+    (progn
+        (evil-normal-state)
+        (shell-command "~/.emacs.d/caps.sh")))
 
 (defun dublicate-multiple ()
   (interactive)
@@ -1018,7 +1037,9 @@ is binary, activate `hexl-mode'."
 *** Text Navigation
 #+begin_src emacs-lisp
 (global-set-key (kbd "M-h") 'left-word)
+(global-set-key (kbd "C-'") #'counsel-imenu)
 (define-key evil-normal-state-map (kbd "/") 'swiper)
+(define-key evil-insert-state-map (kbd "<escape>") 'uncaps-lock)
 (global-set-key (kbd "C-M-k") 'backward-paragraph)
 (global-set-key (kbd "C-M-j") 'forward-paragraph)
 (global-set-key (kbd "M-j") 'move-text-down)
@@ -1190,4 +1211,11 @@ PWD is not in a git repo (or the git command is not found)."
 alias sleep loginctl suspend
 alias down loginctl poweroff
 alias reboot loginctl reboot
+#+end_src
+** Little caps lock script
+#+begin_src sh :tangle "~/.emacs.d/caps.sh"
+if [[ $(xset -q | sed -n 's/^.*Caps Lock:\s*\(\S*\).*$/\1/p') == "on" ]] ; then
+    xdotool key Caps_Lock
+fi
+
 #+end_src
