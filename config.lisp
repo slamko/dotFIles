@@ -19,8 +19,32 @@
   (stumpwm:toggle-mode-line (current-screen)
                           (current-head)))
 
+(defcommand ping-emacs () ()
+  "Check if emacs daemon running"
+    (if (= (length (run-shell-command "emacsclient -a false -e 't'" 't)) 0)
+     (prog ()
+       (run-shell-command "killall emacs")
+       (run-shell-command "emacs --daemon &" t)))
+  	(run-shell-command "eclient"))
+
+(defcommand stm-program () ()
+  "Load the program to STM32"
+  (run-shell-command "./prog.sh"))
+
+(defcommand suspend () ()
+  "enter sleep mode"
+  (run-shell-command "loginctl suspend"))
+
+(defcommand down () ()
+  "shutdown the computer"
+  (run-shell-command "loginctl poweroff"))
+
+(defcommand reboot () ()
+  "shutdown the computer"
+  (run-shell-command "loginctl reboot"))
+
 (defun get-battery-charge ()
-  (let ((raw-battery (run-shell-command "acpi | cut -d, -f2 | tail -c 4 | head -c 3" t)))
+  (let ((raw-battery (run-shell-command "acpi | cut -d ',' -f 2 | cut -c 2-5" t)))
     (substitute #\Space #\Newline raw-battery)))
 
 (defun show-battery-state ()
@@ -33,7 +57,7 @@
    (run-shell-command "amixer sget Master | awk '/^ +Front L/{print $5}'" t)))
 
 (defun get-time ()
-  (run-shell-command "date +%R" t))
+  (run-shell-command  "date \"+%d/%m %R\"" t))
 
 (setq groups-num '(1 2 3 4 5 6))
 (setq group-names '("Web" "Emacs" "Office" "Video" "Pictures"))
@@ -43,34 +67,29 @@
   (loop for g in (cdr groups-num)
         do (gnew (nth (- g 2) group-names))))
 
-(defun startup ()
-  (progn
-    (toggle-bar)
-    (spawn-groups)
-    (run-shell-command "exec pulseaudio --start &")
-    (run-shell-command (concatenate 'string "feh --bg-scale " background " &"))
-    (run-shell-command "exec emacs --daemon &")))
-
-(startup)
+(defcommand null-command() ())
 
 (define-key *top-map* (kbd "s-Return") "exec st")
 (define-key *top-map* (kbd "s-p") "exec rofi -show run")
 (define-key *top-map* (kbd "s-b") "exec brave-browser-stable")
 (define-key *top-map* (kbd "s-g") "gnew")
+(define-key *top-map* (kbd "s-c") "null-command")
+(define-key *root-map* (kbd "Cyrillic_el") "delete")
 (define-key *top-map* (kbd "s-s") "gselect")
-(define-key *top-map* (kbd "s-c") "delete")
+(define-key *top-map* (kbd "s-S") "exec flameshot gui")
 (define-key *top-map* (kbd "s-h") "resize-direction left")
 (define-key *top-map* (kbd "s-l") "resize-direction right")
 (define-key *top-map* (kbd "s-=") "exec amixer set Master 3%+")
 (define-key *top-map* (kbd "s--") "exec amixer set Master 3%-")
+(define-key *top-map* (kbd "s-0") "gother")
 
 (setf *mode-line-foreground-color* "white")
 (setf *mode-line-timeout* 60)
 (setf stumpwm:*screen-mode-line-format*
     (list "%g "
             " ^> "                      ; remaining elements become left-aligned
-            "   Vol:"   '(:eval (get-volume))
-            "  BAT:["  '(:eval (get-battery-charge)) "] "
+            " Vol:"   '(:eval (get-volume)) " |"
+            " BAT: "  '(:eval (get-battery-charge)) "| "
             '(:eval (get-time))))
 
 (loop for n in groups-num
@@ -90,9 +109,20 @@
 (define-key *top-map* (kbd "s-TAB") "next")
 (define-key *top-map* (kbd "s-;") "colon")
 
-(define-key *top-map* (kbd "s-m") "exec eclient")
-(define-key *root-map* (kbd "s-SPC") "exec /home/slamko/.local/bin/sw_lang")
-(define-key *root-map* (kbd "S-M") "exec /home/slamko/.local/bin/sw_lang")
+(defcommand switch-layout () ()
+  "switch keyboard layout"
+  ;; (echo (run-shell-command "/home/slamko/.local/bin/sw_lang" t)))
+  (if (string= "0" (run-shell-command "/home/slamko/.local/bin/sw_lang" t))
+        (echo "layout: ua")
+
+        (echo "layout: us")))
+
+(define-key *top-map* (kbd "s-m") "ping-emacs")
+(define-key *root-map* (kbd "s-SPC") "switch-layout")
+(define-key *top-map* (kbd "M-Shift_L") "switch-layout")
+(define-key *top-map* (kbd "S-Alt_L") "switch-layout")
+(define-key *top-map* (kbd "S-M") "switch-layout")
+(define-key *top-map* (kbd "M-S") "switch-layout")
 
 (define-key *root-map* (kbd "Return") "exec st")
 (define-key *root-map* (kbd "ESC") "abort") 
@@ -103,7 +133,7 @@
 ;; Browse somewhere
 (define-key *top-map* (kbd "s-b") "exec brave-browser-stable")
 ;; Ssh somewhere
-(define-key *root-map* (kbd "p") "exec rofi -show run")
+(define-key *root-map* (kbd "p") "stm-program")
 ;; Lock screen
 (define-key *root-map* (kbd "C-l") "exec xlock")
 
@@ -166,3 +196,15 @@
 ;; (define-frame-preference "Emacs"
   ;; (1 t t :restore "emacs-editing-dump" :title "...xdvi")
   ;; (0 t t :create "emacs-dump" :class "Emacs"))
+
+(defun startup ()
+  (progn
+    (toggle-bar)
+    (spawn-groups)
+    (run-shell-command "exec pulseaudio --start &")
+    (run-shell-command (concatenate 'string "feh --bg-scale " background " &"))
+    (run-shell-command "emacs --daemon &")
+    ))
+
+
+(startup)
